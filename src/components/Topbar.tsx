@@ -133,7 +133,7 @@ export default function Topbar() {
           {/* Brand (visible on md+) */}
           <div className="hidden items-center gap-2 font-semibold md:flex">
             <LayoutDashboard className="h-5 w-5" />
-            <span>Admin</span>
+            <span>Vista World Real Estate</span>
           </div>
 
           {/* Spacer */}
