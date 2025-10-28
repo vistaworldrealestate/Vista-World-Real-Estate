@@ -9,6 +9,7 @@ import {
   FileText,
   Newspaper,
   CreditCard,
+  Contact,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -18,9 +19,10 @@ const nav = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, color: "from-indigo-500 to-purple-500" },
   { href: "/admin/clients", label: "Clients", icon: Users, color: "from-teal-400 to-cyan-500" },
   { href: "/admin/leads", label: "Leads", icon: Contact2, color: "from-pink-500 to-rose-500" },
-  { href: "/admin/invoices", label: "Invoices", icon: FileText, color: "from-amber-400 to-orange-500" },
+  // { href: "/admin/invoices", label: "Invoices", icon: FileText, color: "from-amber-400 to-orange-500" },
   { href: "/admin/blogs", label: "Blogs", icon: Newspaper, color: "from-sky-500 to-blue-500" },
-  { href: "/admin/payments", label: "Payments", icon: CreditCard, color: "from-green-500 to-emerald-500" },
+  // { href: "/admin/payments", label: "Payments", icon: CreditCard, color: "from-green-500 to-emerald-500" },
+  { href: "/admin/users", label: "Users", icon: Contact, color: "from-blue-500 to-red-500" },
 ];
 
 type SidebarProps = {
