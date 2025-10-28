@@ -1,124 +1,196 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useMemo } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardTitle,
+} from "@/components/ui/card";
+import {
   Table,
-  TableBody,
-  TableCaption,
-  TableCell,
   TableHead,
   TableHeader,
+  TableBody,
   TableRow,
+  TableCell,
+  TableCaption,
 } from "@/components/ui/table";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { Badge } from "@/components/ui/badge";
+import { useProfile } from "@/hooks/useProfile";
 
-/* ---------------- Username from localStorage (Topbar uses same key) ---------------- */
-type UserProfile = { name?: string };
-const STORAGE_KEY = "adminUser";
-
-/* ---------------- Fake data (replace with your API) ---------------- */
-const collections = [
-  { name: "Jan", amount: 4200 },
-  { name: "Feb", amount: 6100 },
-  { name: "Mar", amount: 5400 },
-  { name: "Apr", amount: 8000 },
-  { name: "May", amount: 7600 },
-  { name: "Jun", amount: 9100 },
-];
-
+/* ---------------- Fake table data for now ---------------- */
 const recentClients = [
-  { name: "Ravi Kumar", email: "ravi@example.com", joined: "2025-05-21" },
-  { name: "Ananya Singh", email: "ananya@example.com", joined: "2025-05-18" },
-  { name: "Arjun Shah", email: "arjun@example.com", joined: "2025-05-16" },
+  {
+    name: "Ravi Kumar",
+    email: "ravi@example.com",
+    joined: "2025-05-21",
+    avatar: "https://i.pravatar.cc/64?u=ravi@example.com",
+  },
+  {
+    name: "Ananya Singh",
+    email: "ananya@example.com",
+    joined: "2025-05-18",
+    avatar: "https://i.pravatar.cc/64?u=ananya@example.com",
+  },
+  {
+    name: "Arjun Shah",
+    email: "arjun@example.com",
+    joined: "2025-05-16",
+    avatar: "https://i.pravatar.cc/64?u=arjun@example.com",
+  },
 ];
 
 const recentLeads = [
-  { name: "Meera Iyer", source: "Website", status: "New" },
-  { name: "Rohit B", source: "Referral", status: "Contacted" },
-  { name: "Kriti J", source: "Instagram", status: "Qualified" },
-];
-
-const openInvoices = [
-  { id: "INV-1007", client: "Ravi Kumar", total: "$450.00", due: "2025-06-20" },
-  { id: "INV-1008", client: "Ananya Singh", total: "$1,200.00", due: "2025-06-22" },
-  { id: "INV-1009", client: "Arjun Shah", total: "$780.00", due: "2025-06-25" },
+  {
+    name: "Meera Iyer",
+    source: "Website",
+    status: "New",
+    avatar: "https://i.pravatar.cc/64?u=meera@example.com",
+  },
+  {
+    name: "Rohit B",
+    source: "Referral",
+    status: "Contacted",
+    avatar: "https://i.pravatar.cc/64?u=rohit@example.com",
+  },
+  {
+    name: "Kriti J",
+    source: "Instagram",
+    status: "Qualified",
+    avatar: "https://i.pravatar.cc/64?u=kriti@example.com",
+  },
 ];
 
 const latestPosts = [
-  { title: "How we manage clients at scale", status: "Published", date: "2025-06-01" },
-  { title: "Quarterly property insights", status: "Draft", date: "—" },
-  { title: "Onboarding checklist", status: "Scheduled", date: "2025-06-18" },
+  {
+    title: "How we manage clients at scale",
+    status: "Published",
+    date: "2025-06-01",
+  },
+  {
+    title: "Quarterly property insights",
+    status: "Draft",
+    date: "—",
+  },
+  {
+    title: "Onboarding checklist",
+    status: "Scheduled",
+    date: "2025-06-18",
+  },
 ];
 
-const todayPayments = [
-  { id: "#P-3041", client: "Ravi Kumar", method: "UPI", amount: "$220.00" },
-  { id: "#P-3042", client: "Ananya Singh", method: "Card", amount: "$530.00" },
+const recentActivity = [
+  {
+    label: "New lead added",
+    detail: "Meera Iyer from Website",
+    time: "2h ago",
+    tone: "new",
+  },
+  {
+    label: "Client onboarded",
+    detail: "Ravi Kumar moved to Active",
+    time: "6h ago",
+    tone: "client",
+  },
+  {
+    label: "Follow-up sent",
+    detail: "Rohit B (Referral)",
+    time: "1d ago",
+    tone: "message",
+  },
+  {
+    label: "Blog post published",
+    detail: `"How we manage clients at scale"`,
+    time: "2d ago",
+    tone: "publish",
+  },
 ];
 
 export default function AdminDashboardPage() {
-  const [username, setUsername] = useState<string>("Guest");
+  const { profile, loading } = useProfile();
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed: UserProfile = JSON.parse(raw);
-        if (parsed?.name) setUsername(parsed.name);
-      }
-    } catch {}
-  }, []);
+  // derive display values
+  const displayName = useMemo(() => {
+    if (loading) return "…";
+    if (profile?.name && profile.name.trim().length > 0) return profile.name;
+    if (profile?.email) return profile.email.split("@")[0] || "User";
+    return "User";
+  }, [loading, profile]);
+
+  const avatarSrc = useMemo(() => {
+    const baseName = profile?.name || "User";
+    const fallback =
+      "https://api.dicebear.com/8.x/initials/svg?radius=50&fontSize=40&seed=" +
+      encodeURIComponent(baseName);
+    return profile?.avatarurl || fallback;
+  }, [profile]);
 
   return (
-    <div className="space-y-6">
-      {/* ---------------- Welcome Banner (fixed gradient) ---------------- */}
+    <div className="space-y-6 bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
+      {/* ---------------- Welcome Banner ---------------- */}
       <motion.div
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
       >
-        <div className="rounded-2xl border shadow-sm bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600">
-          <div className="flex flex-col gap-3 p-6 text-white sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="text-sm/5 text-white/80">Welcome back</div>
-              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                {username}
-              </h1>
-              <p className="mt-1 text-sm text-white/80">
-                Here’s what’s happening with your clients, leads, invoices, blogs & payments.
-              </p>
+        <div className="relative overflow-hidden rounded-2xl border border-transparent shadow-sm bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white dark:from-indigo-600 dark:via-purple-600 dark:to-pink-600">
+          {/* subtle glow */}
+          <div className="pointer-events-none absolute inset-0 opacity-30 mix-blend-screen [background-image:radial-gradient(circle_at_20%_20%,rgba(255,255,255,.4)_0%,rgba(0,0,0,0)_60%)]" />
+
+          <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-4">
+              {/* avatar */}
+              <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl ring-2 ring-white/30 shadow-lg bg-white/10 text-xs font-medium text-white">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={avatarSrc}
+                  alt={displayName}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+
+              <div>
+                <div className="text-[11px] uppercase text-white/70 tracking-wide">
+                  Welcome back
+                </div>
+                <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl text-white">
+                  {displayName}
+                </h1>
+                <p className="mt-1 max-w-xl text-sm text-white/80">
+                  Here’s what’s happening with your clients, leads & content.
+                </p>
+              </div>
             </div>
-            <div className="flex gap-2">
+
+            <div className="flex flex-wrap gap-2">
               <Button
                 asChild
+                size="sm"
                 variant="secondary"
-                className="bg-white/20 hover:bg-white/30 text-white border-white/20"
+                className="border-white/20 bg-white/20 text-white hover:bg-white/30 dark:bg-white/20 dark:hover:bg-white/30 dark:text-white dark:border-white/20"
               >
                 <Link href="/admin/clients">Add Client</Link>
               </Button>
               <Button
                 asChild
+                size="sm"
                 variant="secondary"
-                className="bg-white/20 hover:bg-white/30 text-white border-white/20"
+                className="border-white/20 bg-white/20 text-white hover:bg-white/30 dark:bg-white/20 dark:hover:bg-white/30 dark:text-white dark:border-white/20"
               >
                 <Link href="/admin/leads">Add Lead</Link>
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white dark:bg-white/10 dark:hover:bg-white/20 dark:text-white dark:border-white/30"
+              >
+                <Link href="/admin/blogs">Write Post</Link>
               </Button>
             </div>
           </div>
@@ -126,82 +198,214 @@ export default function AdminDashboardPage() {
       </motion.div>
 
       {/* ---------------- KPIs ---------------- */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-5">
-        <Kpi title="Clients" value="642" hint="Total" color="from-cyan-500 to-sky-500" />
-        <Kpi title="Leads" value="128" hint="Active" color="from-rose-500 to-pink-500" />
-        <Kpi title="Invoices (Open)" value="17" hint="Due" color="from-amber-400 to-orange-500" />
-        <Kpi title="Blogs" value="56" hint="Published" color="from-violet-500 to-purple-500" />
-        <Kpi title="Payments (Today)" value="$1,540" hint="Collected" positive color="from-emerald-500 to-green-500" />
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+        <Kpi
+          title="Clients"
+          value="642"
+          hint="Total"
+          color="from-cyan-500 to-sky-500"
+        />
+        <Kpi
+          title="Leads"
+          value="128"
+          hint="Active"
+          color="from-rose-500 to-pink-500"
+        />
+        <Kpi
+          title="Blog Posts"
+          value="56"
+          hint="Published"
+          color="from-violet-500 to-purple-500"
+        />
       </div>
 
-      {/* ---------------- Chart + Quick Actions ---------------- */}
+      {/* ---------------- Quick Actions + Right widgets ---------------- */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <Card className="col-span-2">
+        {/* Quick Actions */}
+        <Card className="order-2 rounded-2xl border border-neutral-200 bg-white shadow-sm dark:order-1 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100 lg:col-span-1">
           <CardHeader>
-            <CardTitle>Collections (Last 6 months)</CardTitle>
+            <CardTitle className="text-neutral-900 dark:text-neutral-100">
+              Quick Actions
+            </CardTitle>
           </CardHeader>
-          <CardContent className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={collections} margin={{ left: 6, right: 6, top: 12 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="amount" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+          <CardContent className="grid gap-3">
+            <Button
+              asChild
+              className="justify-start bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 dark:text-white"
+            >
+              <Link href="/admin/clients">Add Client</Link>
+            </Button>
+            <Button
+              asChild
+              variant="secondary"
+              className="justify-start dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
+            >
+              <Link href="/admin/leads">Create Lead</Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="justify-start border-neutral-300 text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-800"
+            >
+              <Link href="/admin/blogs">Write Blog Post</Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="justify-start border-neutral-300 text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-800"
+            >
+              <Link href="/admin/leads">View Lead Pipeline</Link>
+            </Button>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-3">
-            <Button asChild className="justify-start">
-              <Link href="/admin/clients">Add Client</Link>
-            </Button>
-            <Button asChild variant="secondary" className="justify-start">
-              <Link href="/admin/leads">Create Lead</Link>
-            </Button>
-            <Button asChild variant="outline" className="justify-start">
-              <Link href="/admin/invoices">New Invoice</Link>
-            </Button>
-            <Button asChild variant="outline" className="justify-start">
-              <Link href="/admin/blogs">Write Blog Post</Link>
-            </Button>
-            <Button asChild variant="outline" className="justify-start">
-              <Link href="/admin/payments">Record Payment</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Activity + Pipeline summary */}
+        <div className="order-1 grid gap-6 lg:order-2 lg:col-span-2">
+          {/* Pipeline Overview */}
+          <Card className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100">
+            <CardHeader className="flex-row items-center justify-between pb-2">
+              <div>
+                <CardTitle className="text-neutral-900 dark:text-neutral-100">
+                  Pipeline Overview
+                </CardTitle>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                  Quick snapshot of your lead funnel
+                </p>
+              </div>
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                className="rounded-lg text-[12px] border-neutral-300 text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-800"
+              >
+                <Link href="/admin/leads">Go to Pipeline</Link>
+              </Button>
+            </CardHeader>
+
+            <CardContent className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <PipelineStat
+                label="New Leads"
+                value={24}
+                sub="+12% this week"
+                gradient="from-sky-500 to-indigo-500"
+              />
+              <PipelineStat
+                label="Contacted"
+                value={18}
+                sub="7 waiting reply"
+                gradient="from-amber-400 to-orange-500"
+              />
+              <PipelineStat
+                label="Qualified"
+                value={9}
+                sub="3 high intent"
+                gradient="from-emerald-500 to-green-500"
+              />
+              <PipelineStat
+                label="Converted"
+                value={4}
+                sub="Closed deals"
+                gradient="from-violet-500 to-purple-500"
+              />
+            </CardContent>
+          </Card>
+
+          {/* Recent Activity */}
+          <Card className="rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100">
+            <CardHeader className="flex-row items-center justify-between pb-2">
+              <div>
+                <CardTitle className="text-neutral-900 dark:text-neutral-100">
+                  Recent Activity
+                </CardTitle>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                  Latest changes in your workspace
+                </p>
+              </div>
+              <Button
+                asChild
+                size="sm"
+                variant="ghost"
+                className="h-auto rounded-lg px-2 py-1 text-[12px] text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+              >
+                <Link href="/admin/activity">View all</Link>
+              </Button>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              {recentActivity.map((act, i) => (
+                <ActivityItem
+                  key={i}
+                  label={act.label}
+                  detail={act.detail}
+                  time={act.time}
+                  tone={act.tone}
+                />
+              ))}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* ---------------- Clients + Leads ---------------- */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card>
+        {/* Recent Clients */}
+        <Card className="rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100">
           <CardHeader className="flex-row items-center justify-between">
-            <CardTitle>Recent Clients</CardTitle>
-            <Button asChild size="sm" variant="outline">
+            <CardTitle className="text-neutral-900 dark:text-neutral-100">
+              Recent Clients
+            </CardTitle>
+            <Button
+              asChild
+              size="sm"
+              variant="outline"
+              className="border-neutral-300 text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-800"
+            >
               <Link href="/admin/clients">View all</Link>
             </Button>
           </CardHeader>
           <CardContent>
             <Table>
-              <TableCaption>Latest added clients</TableCaption>
+              <TableCaption className="text-neutral-500 dark:text-neutral-400">
+                Latest added clients
+              </TableCaption>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Joined</TableHead>
+                <TableRow className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40 border-neutral-200 dark:border-neutral-800">
+                  <TableHead className="text-neutral-500 dark:text-neutral-400">
+                    Client
+                  </TableHead>
+                  <TableHead className="text-neutral-500 dark:text-neutral-400">
+                    Email
+                  </TableHead>
+                  <TableHead className="text-neutral-500 dark:text-neutral-400">
+                    Joined
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {recentClients.map((c) => (
-                  <TableRow key={c.email}>
-                    <TableCell className="font-medium">{c.name}</TableCell>
-                    <TableCell>{c.email}</TableCell>
-                    <TableCell>{c.joined}</TableCell>
+                  <TableRow
+                    key={c.email}
+                    className="border-neutral-200 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800/40"
+                  >
+                    <TableCell className="font-medium text-neutral-900 dark:text-neutral-100">
+                      <div className="flex items-center gap-3">
+                        <SmallAvatar img={c.avatar} initials={c.name} />
+                        <div className="flex flex-col">
+                          <span className="font-medium leading-none text-neutral-900 dark:text-neutral-100">
+                            {c.name}
+                          </span>
+                          <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                            Active
+                          </span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-neutral-700 dark:text-neutral-200">
+                      {c.email}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-neutral-700 dark:text-neutral-200">
+                      {c.joined}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -209,30 +413,63 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Recent Leads */}
+        <Card className="rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100">
           <CardHeader className="flex-row items-center justify-between">
-            <CardTitle>Recent Leads</CardTitle>
-            <Button asChild size="sm" variant="outline">
+            <CardTitle className="text-neutral-900 dark:text-neutral-100">
+              Recent Leads
+            </CardTitle>
+            <Button
+              asChild
+              size="sm"
+              variant="outline"
+              className="border-neutral-300 text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-800"
+            >
               <Link href="/admin/leads">Manage</Link>
             </Button>
           </CardHeader>
           <CardContent>
             <Table>
-              <TableCaption>Latest incoming leads</TableCaption>
+              <TableCaption className="text-neutral-500 dark:text-neutral-400">
+                Latest incoming leads
+              </TableCaption>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Status</TableHead>
+                <TableRow className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40 border-neutral-200 dark:border-neutral-800">
+                  <TableHead className="text-neutral-500 dark:text-neutral-400">
+                    Lead
+                  </TableHead>
+                  <TableHead className="text-neutral-500 dark:text-neutral-400">
+                    Source
+                  </TableHead>
+                  <TableHead className="text-neutral-500 dark:text-neutral-400">
+                    Status
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {recentLeads.map((l) => (
-                  <TableRow key={l.name}>
-                    <TableCell className="font-medium">{l.name}</TableCell>
-                    <TableCell>{l.source}</TableCell>
+                  <TableRow
+                    key={l.name}
+                    className="border-neutral-200 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-800/40"
+                  >
+                    <TableCell className="font-medium text-neutral-900 dark:text-neutral-100">
+                      <div className="flex items-center gap-3">
+                        <SmallAvatar img={l.avatar} initials={l.name} />
+                        <div className="flex flex-col">
+                          <span className="font-medium leading-none text-neutral-900 dark:text-neutral-100">
+                            {l.name}
+                          </span>
+                          <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                            {l.source}
+                          </span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-neutral-700 dark:text-neutral-200">
+                      {l.source}
+                    </TableCell>
                     <TableCell>
-                      <Badge variant={leadVariant(l.status)}>{l.status}</Badge>
+                      <StatusBadge status={l.status} />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -241,157 +478,177 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* ---------------- Invoices + Blogs ---------------- */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="flex-row items-center justify-between">
-            <CardTitle>Open Invoices</CardTitle>
-            <Button asChild size="sm">
-              <Link href="/admin/invoices">Create Invoice</Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableCaption>Invoices pending payment</TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Invoice</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead>Due</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {openInvoices.map((inv) => (
-                  <TableRow key={inv.id}>
-                    <TableCell className="font-medium">{inv.id}</TableCell>
-                    <TableCell>{inv.client}</TableCell>
-                    <TableCell className="text-right">{inv.total}</TableCell>
-                    <TableCell>{inv.due}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex-row items-center justify-between">
-            <CardTitle>Latest Blog Posts</CardTitle>
-            <Button asChild size="sm" variant="secondary">
-              <Link href="/admin/blogs">Write Post</Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {latestPosts.map((p, idx) => (
-              <div key={idx} className="flex items-center justify-between rounded-lg border bg-white px-3 py-2">
-                <div>
-                  <div className="font-medium">{p.title}</div>
-                  <div className="text-xs text-neutral-500">
-                    Status: {p.status}
-                    {p.date !== "—" ? ` • ${p.date}` : ""}
-                  </div>
-                </div>
-                <Badge variant={postVariant(p.status)}>{p.status}</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ---------------- Payments today ---------------- */}
-      <Card>
-        <CardHeader className="flex-row items-center justify-between">
-          <CardTitle>Payments (Today)</CardTitle>
-          <Button asChild size="sm" variant="outline">
-            <Link href="/admin/payments">View all</Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableCaption>Today’s received payments</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {todayPayments.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.id}</TableCell>
-                  <TableCell>{p.client}</TableCell>
-                  <TableCell>{p.method}</TableCell>
-                  <TableCell className="text-right">{p.amount}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
     </div>
   );
 }
 
-/* ---------------- Helpers ---------------- */
+/* ---------------- helpers for Dashboard ---------------- */
 
 function Kpi({
   title,
   value,
   hint,
-  positive,
-  color,
+  color, // "from-cyan-500 to-sky-500"
 }: {
   title: string;
   value: string;
   hint: string;
-  positive?: boolean;
-  color: string; // e.g. "from-cyan-500 to-sky-500"
+  color: string;
 }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-      <Card className="overflow-hidden rounded-2xl">
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+    >
+      <Card className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100">
         <div className={`h-1 w-full bg-gradient-to-r ${color}`} />
         <CardHeader className="pb-2">
-          <CardTitle className="text-base text-neutral-500">{title}</CardTitle>
+          <CardTitle className="text-sm text-neutral-500 dark:text-neutral-400">
+            {title}
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex items-end justify-between">
           <div>
-            <div className="text-3xl font-bold">{value}</div>
-            <div className={`text-sm ${positive ? "text-emerald-600" : "text-neutral-500"}`}>{hint}</div>
+            <div className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+              {value}
+            </div>
+            <div className="text-sm text-neutral-500 dark:text-neutral-400">
+              {hint}
+            </div>
           </div>
-          <Badge variant="secondary">Overview</Badge>
+          <Badge
+            variant="secondary"
+            className="rounded-full bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
+          >
+            Overview
+          </Badge>
         </CardContent>
       </Card>
     </motion.div>
   );
 }
 
-function leadVariant(status: string): "default" | "secondary" | "outline" {
-  switch (status) {
-    case "New":
-      return "default";
-    case "Contacted":
-      return "secondary";
-    case "Qualified":
-      return "outline";
-    default:
-      return "secondary";
-  }
+function SmallAvatar({
+  img,
+  initials,
+}: {
+  img: string | null | undefined;
+  initials: string;
+}) {
+  const fallback =
+    "https://api.dicebear.com/8.x/initials/svg?radius=50&fontSize=40&seed=" +
+    encodeURIComponent(initials || "U");
+
+  return (
+    <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-xl ring-1 ring-neutral-200 bg-neutral-100 text-xs font-medium text-neutral-600 dark:ring-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={img || fallback}
+        alt={initials}
+        className="h-full w-full object-cover"
+      />
+    </div>
+  );
 }
 
-function postVariant(status: string): "default" | "secondary" | "outline" {
-  switch (status) {
-    case "Published":
-      return "default";
-    case "Scheduled":
-      return "secondary";
-    case "Draft":
-      return "outline";
-    default:
-      return "secondary";
-  }
+function StatusBadge({ status }: { status: string }) {
+  let gradient = "from-neutral-400 to-neutral-600";
+  if (status === "New") gradient = "from-sky-500 to-indigo-500";
+  if (status === "Contacted") gradient = "from-amber-400 to-orange-500";
+  if (status === "Qualified") gradient = "from-emerald-500 to-green-500";
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-medium text-white bg-gradient-to-r ${gradient}`}
+    >
+      {status}
+    </span>
+  );
+}
+
+function PostStatusBadge({ status }: { status: string }) {
+  let gradient = "from-neutral-400 to-neutral-600";
+  if (status === "Published") gradient = "from-emerald-500 to-green-500";
+  if (status === "Scheduled") gradient = "from-sky-500 to-indigo-500";
+  if (status === "Draft") gradient = "from-rose-500 to-pink-500";
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-medium text-white bg-gradient-to-r ${gradient}`}
+    >
+      {status}
+    </span>
+  );
+}
+
+/* mini stat card used in Pipeline Overview */
+function PipelineStat({
+  label,
+  value,
+  sub,
+  gradient,
+}: {
+  label: string;
+  value: number;
+  sub: string;
+  gradient: string; // e.g. "from-sky-500 to-indigo-500"
+}) {
+  return (
+    <div className="flex flex-col justify-between rounded-xl border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
+      <div className="flex items-start justify-between">
+        <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+          {label}
+        </div>
+        <div
+          className={`h-2 w-2 rounded-full bg-gradient-to-r ${gradient} shadow-[0_0_10px_rgba(0,0,0,0.15)]`}
+        />
+      </div>
+      <div className="mt-2 text-2xl font-semibold leading-none tracking-tight text-neutral-900 dark:text-neutral-100">
+        {value}
+      </div>
+      <div className="mt-1 text-[11px] text-neutral-500 dark:text-neutral-400">
+        {sub}
+      </div>
+    </div>
+  );
+}
+
+/* timeline row used in Recent Activity */
+function ActivityItem({
+  label,
+  detail,
+  time,
+  tone,
+}: {
+  label: string;
+  detail: string;
+  time: string;
+  tone: "new" | "client" | "message" | "publish" | string;
+}) {
+  let dotGradient = "from-neutral-400 to-neutral-600"; // default gray dot
+  if (tone === "new") dotGradient = "from-sky-500 to-indigo-500";
+  if (tone === "client") dotGradient = "from-emerald-500 to-green-500";
+  if (tone === "message") dotGradient = "from-amber-400 to-orange-500";
+  if (tone === "publish") dotGradient = "from-violet-500 to-purple-500";
+
+  return (
+    <div className="flex items-start gap-3">
+      {/* gradient dot */}
+      <div
+        className={`relative mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full bg-gradient-to-r ${dotGradient} shadow-[0_0_10px_rgba(0,0,0,0.15)]`}
+      />
+      <div className="flex-1">
+        <div className="text-sm font-medium leading-none text-neutral-800 dark:text-neutral-100">
+          {label}
+        </div>
+        <div className="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+          {detail}
+        </div>
+      </div>
+      <div className="whitespace-nowrap text-[11px] text-neutral-400 dark:text-neutral-500">
+        {time}
+      </div>
+    </div>
+  );
 }

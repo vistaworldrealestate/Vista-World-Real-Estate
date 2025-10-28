@@ -116,7 +116,7 @@ function PriorityBadge({ priority }: { priority: LeadPriority }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-[2px] text-[11px] font-medium ring-1 leading-none",
+        "inline-flex items-center rounded-full px-2 py-[2px] text-[11px] font-medium leading-none ring-1",
         styleMap[priority].bg,
         styleMap[priority].text,
         styleMap[priority].ring
@@ -152,23 +152,23 @@ function SidePanel({
         )}
       >
         {/* overlay */}
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] sm:bg-black/50" />
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] sm:bg-black/50 dark:bg-black/70" />
 
         {/* panel */}
         <div
           className={cn(
-            "fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-xl border border-border bg-background shadow-xl",
-            "max-h-[90vh] overflow-hidden sm:inset-y-0 sm:right-0 sm:left-auto sm:h-full sm:max-h-full sm:w-[360px] sm:rounded-none sm:border-l sm:shadow-2xl"
+            "fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-xl border border-border bg-background text-foreground shadow-xl dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100",
+            "max-h-[90vh] overflow-hidden sm:inset-y-0 sm:right-0 sm:left-auto sm:h-full sm:max-h-full sm:w-[360px] sm:rounded-none sm:border-l sm:shadow-2xl dark:sm:border-neutral-800"
           )}
         >
           {/* header */}
-          <div className="flex-shrink-0 border-b border-border/60 bg-muted/30 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="flex-shrink-0 border-b border-border/60 bg-muted/30 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:border-neutral-700/60 dark:bg-neutral-800/50 dark:supports-[backdrop-filter]:bg-neutral-900/60">
             <DialogHeader className="p-0">
-              <DialogTitle className="text-base font-semibold leading-none tracking-[-0.03em]">
+              <DialogTitle className="text-base font-semibold leading-none tracking-[-0.03em] text-foreground dark:text-neutral-100">
                 {title}
               </DialogTitle>
               {description ? (
-                <DialogDescription className="text-[12px] text-muted-foreground leading-snug">
+                <DialogDescription className="text-[12px] leading-snug text-muted-foreground dark:text-neutral-400">
                   {description}
                 </DialogDescription>
               ) : null}
@@ -176,10 +176,12 @@ function SidePanel({
           </div>
 
           {/* body */}
-          <div className="flex-1 overflow-y-auto px-4 py-4">{children}</div>
+          <div className="flex-1 overflow-y-auto px-4 py-4 bg-background dark:bg-neutral-900">
+            {children}
+          </div>
 
           {/* footer */}
-          <div className="flex-shrink-0 border-t border-border/60 bg-background/80 px-4 py-3">
+          <div className="flex-shrink-0 border-t border-border/60 bg-background/80 px-4 py-3 dark:border-neutral-700/60 dark:bg-neutral-900/80">
             <DialogFooter className="flex flex-row justify-end gap-2 p-0 sm:gap-3">
               {footer}
             </DialogFooter>
@@ -306,7 +308,7 @@ export default function LeadsPage() {
     const toneMap = {
       red: {
         ring: "ring-red-500/20 dark:ring-red-400/30",
-        dot: "bg-red-500",
+        dot: "bg-red-500 dark:bg-red-400",
       },
       amber: {
         ring: "ring-amber-400/30",
@@ -314,13 +316,13 @@ export default function LeadsPage() {
       },
       blue: {
         ring: "ring-blue-500/20 dark:ring-blue-400/30",
-        dot: "bg-blue-500",
+        dot: "bg-blue-500 dark:bg-blue-400",
       },
     }[tone];
 
     return (
-      <div className="rounded-lg border border-border/60 bg-background/50 p-3 shadow-sm flex items-start justify-between sm:block sm:space-y-2">
-        <div className="flex items-center gap-2 text-[12px] font-medium text-muted-foreground leading-none">
+      <div className="flex items-start justify-between rounded-lg border border-border/60 bg-background/50 p-3 text-foreground shadow-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 sm:block sm:space-y-2">
+        <div className="flex items-center gap-2 text-[12px] font-medium leading-none text-muted-foreground dark:text-neutral-400">
           <span
             className={cn(
               "h-1.5 w-1.5 rounded-full shadow-sm",
@@ -332,8 +334,7 @@ export default function LeadsPage() {
 
         <div
           className={cn(
-            "text-2xl font-semibold tracking-[-0.04em] text-foreground leading-none",
-            "inline-flex rounded-md px-2 py-1 ring-1",
+            "inline-flex rounded-md px-2 py-1 text-foreground text-2xl font-semibold leading-none tracking-[-0.04em] ring-1 dark:text-neutral-100",
             toneMap.ring
           )}
         >
@@ -350,26 +351,26 @@ export default function LeadsPage() {
     <>
       <div
         className={cn(
-          "flex flex-col w-full gap-6 p-4 sm:p-6 max-w-[1400px] mx-auto",
+          "mx-auto flex w-full max-w-[1400px] flex-col gap-6 p-4 sm:p-6",
           "bg-[radial-gradient(circle_at_20%_20%,hsl(var(--primary)/0.06)_0%,transparent_60%)]",
-          "bg-background"
+          "bg-background text-foreground dark:bg-neutral-950 dark:text-neutral-100"
         )}
       >
         {/* ========== HEADER BAR ========== */}
         <section className="flex flex-col gap-4">
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="flex flex-col gap-2">
               <div className="flex flex-col sm:flex-row sm:items-end sm:gap-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-xl font-semibold tracking-[-0.03em] text-foreground leading-none">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-xl font-semibold leading-none tracking-[-0.03em] text-foreground dark:text-neutral-100">
                     Leads
                   </h1>
-                  <span className="inline-flex items-center rounded-full bg-muted/60 px-2 py-[2px] text-[10px] font-medium text-muted-foreground ring-1 ring-border">
+                  <span className="inline-flex items-center rounded-full bg-muted/60 px-2 py-[2px] text-[10px] font-medium text-muted-foreground ring-1 ring-border dark:bg-neutral-800/80 dark:text-neutral-300 dark:ring-neutral-700">
                     Pipeline
                   </span>
                 </div>
 
-                <span className="text-xs text-muted-foreground leading-none">
+                <span className="leading-none text-xs text-muted-foreground dark:text-neutral-400">
                   Manage, filter & update your pipeline
                 </span>
               </div>
@@ -380,7 +381,7 @@ export default function LeadsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9 rounded-lg border-border bg-background/50 text-[13px] shadow-sm hover:bg-background gap-2"
+                className="h-9 gap-2 rounded-lg border-border bg-background/50 text-[13px] shadow-sm hover:bg-background dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
               >
                 <Download className="h-4 w-4" />
                 <span>Export CSV</span>
@@ -389,7 +390,7 @@ export default function LeadsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9 rounded-lg border-border bg-background/50 text-[13px] shadow-sm hover:bg-background gap-2"
+                className="h-9 gap-2 rounded-lg border-border bg-background/50 text-[13px] shadow-sm hover:bg-background dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
               >
                 <Upload className="h-4 w-4" />
                 <span>Import CSV</span>
@@ -397,7 +398,7 @@ export default function LeadsPage() {
 
               <Button
                 size="sm"
-                className="h-9 rounded-lg text-[13px] font-medium shadow-sm active:scale-[0.99] gap-2"
+                className="h-9 gap-2 rounded-lg text-[13px] font-medium shadow-sm active:scale-[0.99] bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:text-white dark:hover:bg-indigo-600"
                 onClick={() => setOpenAdd(true)}
               >
                 <Plus className="h-4 w-4" />
@@ -407,7 +408,7 @@ export default function LeadsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9 rounded-lg border-border bg-background/50 text-[13px] shadow-sm hover:bg-background gap-2"
+                className="h-9 gap-2 rounded-lg border-border bg-background/50 text-[13px] shadow-sm hover:bg-background dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
                 onClick={() => alert("open Trash view")}
               >
                 <Trash2 className="h-4 w-4" />
@@ -418,20 +419,20 @@ export default function LeadsPage() {
         </section>
 
         {/* ========== FILTERS + STATS ========== */}
-        <Card className="border-border/60 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80">
-          <CardContent className="p-4 flex flex-col gap-4">
+        <Card className="border-border/60 bg-background shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100 dark:supports-[backdrop-filter]:bg-neutral-900/80">
+          <CardContent className="flex flex-col gap-4 p-4">
             {/* Search row + filters */}
-            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               {/* Search + mobile filters */}
-              <div className="flex flex-col gap-3 w-full lg:max-w-[480px]">
+              <div className="flex w-full flex-col gap-3 lg:max-w-[480px]">
                 <div className="relative w-full">
-                  <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground dark:text-neutral-500">
                     <Search className="h-4 w-4" />
                   </div>
                   <Input
                     className={cn(
-                      "pl-9 text-sm h-9 rounded-lg",
-                      "bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/40"
+                      "h-9 rounded-lg pl-9 text-sm",
+                      "bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/40 dark:border-neutral-700 dark:bg-neutral-800/60 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:supports-[backdrop-filter]:bg-neutral-800/40"
                     )}
                     placeholder="Search name, email, phone, company…"
                     value={search}
@@ -447,10 +448,10 @@ export default function LeadsPage() {
                       setPriorityFilter(val as "all" | LeadPriority)
                     }
                   >
-                    <SelectTrigger className="h-9 rounded-lg text-sm w-full">
+                    <SelectTrigger className="h-9 w-full rounded-lg text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100">
                       <SelectValue placeholder="All Priority" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100">
                       <SelectItem value="all">All Priority</SelectItem>
                       <SelectItem value="Hot">Hot</SelectItem>
                       <SelectItem value="Warm">Warm</SelectItem>
@@ -462,7 +463,7 @@ export default function LeadsPage() {
                     variant="outline"
                     size="sm"
                     onClick={handleResetFilters}
-                    className="h-9 rounded-lg border-border bg-background/50 text-[13px] shadow-sm hover:bg-background shrink-0"
+                    className="h-9 shrink-0 rounded-lg border-border bg-background/50 text-[13px] shadow-sm hover:bg-background dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
                   >
                     Reset
                   </Button>
@@ -470,17 +471,17 @@ export default function LeadsPage() {
               </div>
 
               {/* desktop filters */}
-              <div className="hidden sm:flex flex-none items-start gap-2">
+              <div className="hidden flex-none items-start gap-2 sm:flex">
                 <Select
                   value={priorityFilter}
                   onValueChange={(val) =>
                     setPriorityFilter(val as "all" | LeadPriority)
                   }
                 >
-                  <SelectTrigger className="h-9 rounded-lg text-sm min-w-[130px]">
+                  <SelectTrigger className="h-9 min-w-[130px] rounded-lg text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100">
                     <SelectValue placeholder="All Priority" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100">
                     <SelectItem value="all">All Priority</SelectItem>
                     <SelectItem value="Hot">Hot</SelectItem>
                     <SelectItem value="Warm">Warm</SelectItem>
@@ -492,7 +493,7 @@ export default function LeadsPage() {
                   variant="outline"
                   size="sm"
                   onClick={handleResetFilters}
-                  className="h-9 rounded-lg border-border bg-background/50 text-[13px] shadow-sm hover:bg-background"
+                  className="h-9 rounded-lg border-border bg-background/50 text-[13px] shadow-sm hover:bg-background dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
                 >
                   Reset
                 </Button>
@@ -509,23 +510,23 @@ export default function LeadsPage() {
         </Card>
 
         {/* ========== TABLE ========== */}
-        <Card className="border-border/60 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80 overflow-hidden">
-          <CardHeader className="px-4 py-3 border-b border-border/60">
-            <CardTitle className="text-[13px] font-medium text-muted-foreground flex flex-col sm:flex-row sm:items-center sm:gap-2">
-              <span className="text-foreground font-semibold text-sm leading-none">
+        <Card className="overflow-hidden border-border/60 bg-background shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100 dark:supports-[backdrop-filter]:bg-neutral-900/80">
+          <CardHeader className="border-b border-border/60 px-4 py-3 dark:border-neutral-700/60">
+            <CardTitle className="flex flex-col text-[13px] font-medium text-muted-foreground sm:flex-row sm:items-center sm:gap-2 dark:text-neutral-400">
+              <span className="text-sm font-semibold leading-none text-foreground dark:text-neutral-100">
                 Leads List
               </span>
-              <span className="text-[11px] text-muted-foreground leading-none">
+              <span className="text-[11px] leading-none text-muted-foreground dark:text-neutral-500">
                 {filteredLeads.length} result
                 {filteredLeads.length === 1 ? "" : "s"}
               </span>
             </CardTitle>
           </CardHeader>
 
-          <CardContent className="p-0 overflow-x-auto">
-            <table className="w-full text-sm min-w-[900px]">
+          <CardContent className="overflow-x-auto p-0">
+            <table className="min-w-[900px] w-full text-sm">
               <thead>
-                <tr className="bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground border-b border-border/60">
+                <tr className="border-b border-border/60 bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground dark:border-neutral-700/60 dark:bg-neutral-800/40 dark:text-neutral-400">
                   <th className="py-3 pl-4 pr-2 text-left font-medium">
                     Name
                   </th>
@@ -541,18 +542,18 @@ export default function LeadsPage() {
                   <th className="py-3 px-2 text-left font-medium">
                     Priority
                   </th>
-                  <th className="py-3 px-2 text-left font-medium whitespace-nowrap">
+                  <th className="whitespace-nowrap py-3 px-2 text-left font-medium">
                     Last Contacted
                   </th>
                   <th className="py-3 px-2 text-left font-medium">Actions</th>
                 </tr>
               </thead>
 
-              <tbody className="text-[13px] text-foreground/90">
+              <tbody className="text-[13px] text-foreground/90 dark:text-neutral-200">
                 {filteredLeads.length === 0 ? (
                   <tr>
                     <td
-                      className="px-4 py-10 text-center text-muted-foreground text-sm"
+                      className="px-4 py-10 text-center text-sm text-muted-foreground dark:text-neutral-500"
                       colSpan={7}
                     >
                       No leads match your filters
@@ -563,24 +564,26 @@ export default function LeadsPage() {
                     <tr
                       key={lead.id}
                       className={cn(
-                        "group border-b border-border/60 transition-colors",
-                        "hover:bg-muted/30",
-                        idx % 2 === 1 ? "bg-muted/10" : "bg-transparent"
+                        "group border-b border-border/60 transition-colors dark:border-neutral-800",
+                        "hover:bg-muted/30 dark:hover:bg-neutral-800/40",
+                        idx % 2 === 1
+                          ? "bg-muted/10 dark:bg-neutral-800/20"
+                          : "bg-transparent"
                       )}
                     >
-                      <td className="py-4 pl-4 pr-2 align-top text-foreground font-medium leading-[1.2]">
+                      <td className="py-4 pl-4 pr-2 align-top font-medium leading-[1.2] text-foreground dark:text-neutral-100">
                         {lead.name}
                       </td>
 
-                      <td className="py-4 px-2 align-top leading-[1.2] text-muted-foreground break-all">
+                      <td className="break-all py-4 px-2 align-top leading-[1.2] text-muted-foreground dark:text-neutral-500">
                         {lead.email || "-"}
                       </td>
 
-                      <td className="py-4 px-2 align-top leading-[1.2] text-foreground whitespace-nowrap">
+                      <td className="whitespace-nowrap py-4 px-2 align-top leading-[1.2] text-foreground dark:text-neutral-200">
                         {lead.phone || "-"}
                       </td>
 
-                      <td className="py-4 px-2 align-top leading-[1.2] text-muted-foreground">
+                      <td className="py-4 px-2 align-top leading-[1.2] text-muted-foreground dark:text-neutral-500">
                         {lead.source || "-"}
                       </td>
 
@@ -588,7 +591,7 @@ export default function LeadsPage() {
                         <PriorityBadge priority={lead.priority} />
                       </td>
 
-                      <td className="py-4 px-2 align-top leading-[1.2] text-muted-foreground whitespace-nowrap">
+                      <td className="whitespace-nowrap py-4 px-2 align-top leading-[1.2] text-muted-foreground dark:text-neutral-500">
                         {lead.lastContacted}
                       </td>
 
@@ -597,7 +600,7 @@ export default function LeadsPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-8 rounded-md border-border bg-background/50 px-2 text-[12px] font-medium shadow-sm hover:bg-background whitespace-nowrap"
+                            className="h-8 whitespace-nowrap rounded-md border-border bg-background/50 px-2 text-[12px] font-medium shadow-sm hover:bg-background dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
                             onClick={() => convertToClient(lead.id)}
                           >
                             Convert → Client
@@ -606,7 +609,7 @@ export default function LeadsPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-8 rounded-md border-border bg-background/50 px-2 text-[12px] font-medium shadow-sm hover:bg-background gap-1 whitespace-nowrap"
+                            className="h-8 whitespace-nowrap gap-1 rounded-md border-border bg-background/50 px-2 text-[12px] font-medium shadow-sm hover:bg-background dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
                             onClick={() => editLead(lead.id)}
                           >
                             <Pencil className="h-3.5 w-3.5" />
@@ -616,7 +619,7 @@ export default function LeadsPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-8 rounded-md border-red-300/60 text-red-600 dark:text-red-400 bg-red-500/5 hover:bg-red-500/10 px-2 text-[12px] font-medium shadow-sm gap-1 whitespace-nowrap"
+                            className="h-8 whitespace-nowrap gap-1 rounded-md border-red-300/60 bg-red-500/5 px-2 text-[12px] font-medium text-red-600 shadow-sm hover:bg-red-500/10 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
                             onClick={() => moveToTrash(lead.id)}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -631,10 +634,10 @@ export default function LeadsPage() {
             </table>
 
             {/* footer / pagination */}
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between border-t border-border/60 px-4 py-4 text-[12px] text-muted-foreground gap-3">
-              <div className="leading-none text-muted-foreground">
+            <div className="flex flex-col gap-3 border-t border-border/60 px-4 py-4 text-[12px] text-muted-foreground dark:border-neutral-700/60 dark:text-neutral-500 lg:flex-row lg:items-center lg:justify-between">
+              <div className="leading-none text-muted-foreground dark:text-neutral-500">
                 Showing{" "}
-                <span className="text-foreground font-medium">
+                <span className="text-foreground font-medium dark:text-neutral-100">
                   {filteredLeads.length}
                 </span>{" "}
                 leads
@@ -644,14 +647,14 @@ export default function LeadsPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-8 rounded-md border-border bg-background/50 px-3 text-[12px] shadow-sm hover:bg-background active:scale-[0.99]"
+                  className="h-8 rounded-md border-border bg-background/50 px-3 text-[12px] shadow-sm hover:bg-background active:scale-[0.99] dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
                 >
                   Prev
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-8 rounded-md border-border bg-background/50 px-3 text-[12px] shadow-sm hover:bg-background active:scale-[0.99]"
+                  className="h-8 rounded-md border-border bg-background/50 px-3 text-[12px] shadow-sm hover:bg-background active:scale-[0.99] dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
                 >
                   Next
                 </Button>
@@ -672,14 +675,14 @@ export default function LeadsPage() {
             <DialogClose asChild>
               <Button
                 variant="outline"
-                className="h-9 rounded-md border-border text-[13px]"
+                className="h-9 rounded-md border-border text-[13px] dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
               >
                 Cancel
               </Button>
             </DialogClose>
 
             <Button
-              className="h-9 rounded-md text-[13px] font-medium"
+              className="h-9 rounded-md bg-indigo-600 text-[13px] font-medium text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:text-white dark:hover:bg-indigo-600"
               onClick={handleSaveLead}
             >
               Save Lead
@@ -688,12 +691,14 @@ export default function LeadsPage() {
         }
       >
         {/* FORM BODY */}
-        <div className="grid gap-4 text-sm">
+        <div className="grid gap-4 text-sm text-foreground dark:text-neutral-100">
           {/* Name */}
           <div className="grid gap-1.5">
-            <Label className="text-[12px] font-medium">Full name *</Label>
+            <Label className="text-[12px] font-medium text-foreground dark:text-neutral-100">
+              Full name *
+            </Label>
             <Input
-              className="h-9 text-sm"
+              className="h-9 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500"
               placeholder="eg. Rohan Mehta"
               value={formName}
               onChange={(e) => setFormName(e.target.value)}
@@ -702,9 +707,11 @@ export default function LeadsPage() {
 
           {/* Phone */}
           <div className="grid gap-1.5">
-            <Label className="text-[12px] font-medium">Phone *</Label>
+            <Label className="text-[12px] font-medium text-foreground dark:text-neutral-100">
+              Phone *
+            </Label>
             <Input
-              className="h-9 text-sm"
+              className="h-9 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500"
               placeholder="+91 98765 12345"
               value={formPhone}
               onChange={(e) => setFormPhone(e.target.value)}
@@ -713,9 +720,11 @@ export default function LeadsPage() {
 
           {/* Email */}
           <div className="grid gap-1.5">
-            <Label className="text-[12px] font-medium">Email</Label>
+            <Label className="text-[12px] font-medium text-foreground dark:text-neutral-100">
+              Email
+            </Label>
             <Input
-              className="h-9 text-sm"
+              className="h-9 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500"
               placeholder="lead@email.com"
               value={formEmail}
               onChange={(e) => setFormEmail(e.target.value)}
@@ -724,15 +733,17 @@ export default function LeadsPage() {
 
           {/* Source */}
           <div className="grid gap-1.5">
-            <Label className="text-[12px] font-medium">Source</Label>
+            <Label className="text-[12px] font-medium text-foreground dark:text-neutral-100">
+              Source
+            </Label>
             <Select
               value={formSource}
               onValueChange={(val) => setFormSource(val)}
             >
-              <SelectTrigger className="h-9 text-sm">
+              <SelectTrigger className="h-9 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100">
                 <SelectItem value="gmp data">gmp data</SelectItem>
                 <SelectItem value="facebook ads">facebook ads</SelectItem>
                 <SelectItem value="google ads">google ads</SelectItem>
@@ -744,17 +755,17 @@ export default function LeadsPage() {
 
           {/* Priority */}
           <div className="grid gap-1.5">
-            <Label className="text-[12px] font-medium">Priority</Label>
+            <Label className="text-[12px] font-medium text-foreground dark:text-neutral-100">
+              Priority
+            </Label>
             <Select
               value={formPriority}
-              onValueChange={(val) =>
-                setFormPriority(val as LeadPriority)
-              }
+              onValueChange={(val) => setFormPriority(val as LeadPriority)}
             >
-              <SelectTrigger className="h-9 text-sm">
+              <SelectTrigger className="h-9 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100">
                 <SelectItem value="Hot">Hot</SelectItem>
                 <SelectItem value="Warm">Warm</SelectItem>
                 <SelectItem value="Cold">Cold</SelectItem>
@@ -764,15 +775,15 @@ export default function LeadsPage() {
 
           {/* Last Contacted info (read only preview) */}
           <div className="grid gap-1.5">
-            <Label className="text-[12px] font-medium">
+            <Label className="text-[12px] font-medium text-foreground dark:text-neutral-100">
               Last Contacted (auto)
             </Label>
             <Input
-              className="h-9 text-sm"
+              className="h-9 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500"
               value={new Date().toLocaleDateString("en-GB")}
               readOnly
             />
-            <p className="text-[11px] text-muted-foreground leading-none">
+            <p className="text-[11px] leading-none text-muted-foreground dark:text-neutral-500">
               This will be saved as today&apos;s date.
             </p>
           </div>

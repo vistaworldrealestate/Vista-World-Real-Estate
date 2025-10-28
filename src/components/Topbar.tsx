@@ -52,9 +52,11 @@ import {
 
 import Sidebar from "./Sidebar";
 import { createSupabaseBrowser } from "@/lib/supabaseClient";
+import { useProfile } from "@/hooks/useProfile";
+import { ModeToggle } from "@/components/ModeToggle"; // <---- ADD THIS (we'll define it below)
 
-/* ---------- Types ---------- */
-type UserProfile = {
+/* ---------- Local UI types ---------- */
+type EditableUser = {
   id: string;
   email: string;
   name: string;
@@ -63,134 +65,75 @@ type UserProfile = {
   role: string;
 };
 
-const FALLBACK_USER: UserProfile = {
-  id: "",
-  email: "",
-  name: "Loading...",
-  avatarUrl: "https://i.pravatar.cc/64",
-  bio: "—",
-  role: "admin",
-};
-
 export default function Topbar() {
   const router = useRouter();
   const supabase = createSupabaseBrowser();
+
+  // global profile (shared source of truth)
+  const { profile, loading } = useProfile();
 
   // dialogs
   const [profileOpen, setProfileOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // actual user in UI
-  const [user, setUser] = useState<UserProfile>(FALLBACK_USER);
+  // local derived state for display user
+  const [user, setUser] = useState<EditableUser>({
+    id: "",
+    email: "",
+    name: "Loading...",
+    avatarUrl: "https://i.pravatar.cc/64",
+    bio: "—",
+    role: "admin",
+  });
 
-  // edit buffer for settings
-  const [form, setForm] = useState<UserProfile>(FALLBACK_USER);
+  // edit buffer for the settings form
+  const [form, setForm] = useState<EditableUser>({
+    id: "",
+    email: "",
+    name: "",
+    avatarUrl: "",
+    bio: "",
+    role: "",
+  });
 
-  const [loadingProfile, setLoadingProfile] = useState(true);
-
-  // ----------------------------------
-  // 1. Load session + profile (and ensure row exists)
-  // ----------------------------------
+  // sync `profile` -> `user` whenever profile changes
   useEffect(() => {
-    let mounted = true;
+    if (!profile) return;
 
-    async function init() {
-      // 1. Get auth user
-      const {
-        data: { user: authUser },
-        error: authErr,
-      } = await supabase.auth.getUser();
+    const safeName =
+      profile.name && profile.name.trim().length > 0
+        ? profile.name
+        : profile.email?.split("@")[0] || "User";
 
-      if (authErr || !authUser) {
-        router.replace("/login");
-        return;
-      }
+    const finalAvatar =
+      profile.avatarurl ||
+      `https://i.pravatar.cc/64?u=${profile.id || "fallback"}`;
 
-      const authId = authUser.id;
-      const authEmail = authUser.email ?? "";
-
-      // 2. Try to fetch profile row using DB column names
-      const { data: profileRow, error: profileErr } = await supabase
-        .from("profiles")
-        .select("name, avatarurl, bio, role")
-        .eq("id", authId)
-        .single();
-
-      // We'll normalize this into camelCase for React state
-      let effectiveProfile:
-        | {
-            name: string | null;
-            avatarurl: string | null;
-            bio: string | null;
-            role: string | null;
-          }
-        | null = profileRow ?? null;
-
-      // 3. If no row yet, create starter row
-      if (profileErr || !profileRow) {
-        const starterDbRow = {
-          id: authId,
-          name: authEmail.split("@")[0] || "User",
-          avatarurl: `https://i.pravatar.cc/64?u=${authId}`,
-          bio: "—",
-          role: "admin",
-        };
-
-        // Use insert OR upsert with correct column names
-        const { error: createErr } = await supabase
-          .from("profiles")
-          .upsert(
-            {
-              id: starterDbRow.id,
-              name: starterDbRow.name,
-              avatarurl: starterDbRow.avatarurl,
-              bio: starterDbRow.bio,
-              role: starterDbRow.role,
-            },
-            { onConflict: "id" }
-          );
-
-        if (createErr) {
-          console.error("Failed to create starter profile:", createErr);
-          // even if it failed, fall back to in-memory so UI doesn't explode
-          effectiveProfile = starterDbRow;
-        } else {
-          effectiveProfile = starterDbRow;
-        }
-      }
-
-      // 4. Build merged user object for UI state, mapping avatarurl -> avatarUrl
-      const merged: UserProfile = {
-        id: authId,
-        email: authEmail,
-        name:
-          effectiveProfile?.name ||
-          authEmail.split("@")[0] ||
-          "User",
-        avatarUrl:
-          effectiveProfile?.avatarurl ||
-          `https://i.pravatar.cc/64?u=${authId}`,
-        bio: effectiveProfile?.bio || "—",
-        role: effectiveProfile?.role || "admin",
-      };
-
-      if (mounted) {
-        setUser(merged);
-        setForm(merged);
-        setLoadingProfile(false);
-      }
-    }
-
-    init();
-    return () => {
-      mounted = false;
+    const merged: EditableUser = {
+      id: profile.id,
+      email: profile.email ?? "",
+      name: safeName,
+      avatarUrl: finalAvatar,
+      bio: profile.bio || "—",
+      role: profile.role || "admin",
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
-  // ----------------------------------
-  // 2. Avatar upload → Supabase Storage → update preview
-  // ----------------------------------
+    setUser(merged);
+
+    // if settings is open right now, also keep form in sync
+    if (settingsOpen === false) {
+      setForm(merged);
+    }
+  }, [profile, settingsOpen]);
+
+  // If there is no profile (not logged in), kick to /login
+  useEffect(() => {
+    if (!loading && !profile) {
+      router.replace("/login");
+    }
+  }, [loading, profile, router]);
+
+  // Avatar upload
   async function handleAvatarFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !user.id) return;
@@ -198,7 +141,6 @@ export default function Topbar() {
     const ext = file.name.split(".").pop() || "png";
     const filePath = `${user.id}.${ext}`;
 
-    // upload to 'avatars' bucket
     const { error: uploadErr } = await supabase.storage
       .from("avatars")
       .upload(filePath, file, {
@@ -211,23 +153,17 @@ export default function Topbar() {
       return;
     }
 
-    // get public URL
     const {
       data: { publicUrl },
     } = supabase.storage.from("avatars").getPublicUrl(filePath);
 
-    // update form preview immediately
     setForm((prev) => ({ ...prev, avatarUrl: publicUrl }));
   }
 
-  // ----------------------------------
-  // 3. Save settings → persist to profiles
-  // ----------------------------------
+  // Save settings
   async function handleSaveSettings() {
-    // optimistic UI
     setUser(form);
 
-    // map camelCase -> snake/db case
     const { error: upsertErr } = await supabase
       .from("profiles")
       .upsert(
@@ -237,6 +173,7 @@ export default function Topbar() {
           avatarurl: form.avatarUrl,
           bio: form.bio,
           role: form.role,
+          email: form.email,
         },
         { onConflict: "id" }
       );
@@ -246,24 +183,26 @@ export default function Topbar() {
     }
 
     setSettingsOpen(false);
-    setProfileOpen(true); // show updated profile view
+    setProfileOpen(true);
   }
 
-  // ----------------------------------
-  // 4. Logout
-  // ----------------------------------
   async function handleLogout() {
     await supabase.auth.signOut();
     router.replace("/login");
   }
 
-  // ----------------------------------
-  // 5. UI
-  // ----------------------------------
   return (
     <>
       {/* TOP BAR */}
-      <header className="sticky top-0 inset-x-0 z-40 border-b bg-white/80 backdrop-blur">
+      <header
+        className="
+          sticky top-0 inset-x-0 z-40
+          border-b
+          bg-white/80 backdrop-blur
+          border-neutral-200
+          dark:bg-neutral-900/70 dark:border-neutral-800
+        "
+      >
         <div className="flex h-16 w-full items-center gap-3 px-4 sm:px-6 md:px-8">
           {/* Mobile sidebar trigger */}
           <Sheet>
@@ -273,7 +212,14 @@ export default function Topbar() {
               </Button>
             </SheetTrigger>
 
-            <SheetContent side="left" className="w-72 p-4">
+            <SheetContent
+              side="left"
+              className="
+                w-72 p-4
+                bg-white text-neutral-900
+                dark:bg-neutral-900 dark:text-neutral-100
+              "
+            >
               <SheetHeader className="mb-2">
                 <SheetTitle className="sr-only">Main navigation</SheetTitle>
                 <SheetDescription className="sr-only">
@@ -281,7 +227,7 @@ export default function Topbar() {
                 </SheetDescription>
               </SheetHeader>
 
-              <div className="mb-4 flex items-center gap-2 font-semibold">
+              <div className="mb-4 flex items-center gap-2 font-semibold text-neutral-800 dark:text-neutral-100">
                 <LayoutDashboard className="h-5 w-5" />
                 <span>Vista World Real Estate</span>
               </div>
@@ -291,7 +237,7 @@ export default function Topbar() {
           </Sheet>
 
           {/* Brand desktop */}
-          <div className="hidden items-center gap-2 font-semibold md:flex">
+          <div className="hidden items-center gap-2 font-semibold text-neutral-800 dark:text-neutral-100 md:flex">
             <LayoutDashboard className="h-5 w-5" />
             <span>Vista World Real Estate</span>
           </div>
@@ -299,44 +245,76 @@ export default function Topbar() {
           {/* Right section */}
           <div className="ml-auto flex items-center gap-2">
             {/* Search (desktop only) */}
-            <div className="hidden items-center gap-2 rounded-xl border bg-white px-2 py-1.5 md:flex">
-              <Search className="h-4 w-4" />
+            <div
+              className="
+                hidden md:flex items-center gap-2
+                rounded-xl border px-2 py-1.5
+                bg-white border-neutral-200
+                dark:bg-neutral-800 dark:border-neutral-700
+              "
+            >
+              <Search className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
               <Input
-                className="h-8 w-64 border-0 focus-visible:ring-0"
+                className="
+                  h-8 w-64 border-0 bg-transparent p-0 shadow-none
+                  text-neutral-900 placeholder-neutral-500
+                  focus-visible:ring-0 focus-visible:ring-offset-0
+                  dark:text-neutral-100 dark:placeholder-neutral-400
+                "
                 placeholder="Search…"
               />
             </div>
 
-            <Button variant="ghost" size="icon" aria-label="Notifications">
+            {/* Notifications */}
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Notifications"
+              className="text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
+            >
               <Bell className="h-5 w-5" />
             </Button>
+
+            {/* Theme toggle (dark / light) */}
+            <ModeToggle />
 
             {/* User dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="gap-2"
-                  disabled={loadingProfile}
+                  className="
+                    gap-2
+                    text-neutral-700 hover:bg-neutral-100
+                    dark:text-neutral-200 dark:hover:bg-neutral-800
+                  "
+                  disabled={loading || !profile}
                 >
                   <Avatar className="h-6 w-6">
                     <AvatarImage src={user.avatarUrl} alt={user.name} />
                     <AvatarFallback>
-                      {user.name?.[0]?.toUpperCase() || "U"}
+                      {(user.name?.[0] || "U").toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
 
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent
+                align="end"
+                className="
+                  w-56
+                  bg-white text-neutral-900 border border-neutral-200
+                  dark:bg-neutral-900 dark:text-neutral-100 dark:border-neutral-700
+                "
+              >
                 <DropdownMenuLabel className="flex flex-col">
                   <span className="text-sm font-medium">{user.name}</span>
-                  <span className="text-[11px] text-neutral-500 truncate">
+                  <span className="text-[11px] text-neutral-500 dark:text-neutral-400 truncate">
                     {user.email}
                   </span>
                   <span className="text-[11px] text-indigo-600 font-medium">
-                    {user.role === "admin" ? "Admin Access" : user.role}
+                    {user.role === 'admin' ? 'Admin Access' : user.role}
                   </span>
                 </DropdownMenuLabel>
 
@@ -347,6 +325,7 @@ export default function Topbar() {
                     e.preventDefault();
                     setProfileOpen(true);
                   }}
+                  className="cursor-pointer dark:focus:bg-neutral-800"
                 >
                   <UserIcon className="mr-2 h-4 w-4" /> Profile
                 </DropdownMenuItem>
@@ -355,7 +334,9 @@ export default function Topbar() {
                   onSelect={(e) => {
                     e.preventDefault();
                     setSettingsOpen(true);
+                    setForm(user);
                   }}
+                  className="cursor-pointer dark:focus:bg-neutral-800"
                 >
                   <Settings className="mr-2 h-4 w-4" /> Settings
                 </DropdownMenuItem>
@@ -363,7 +344,7 @@ export default function Topbar() {
                 <DropdownMenuSeparator />
 
                 <DropdownMenuItem
-                  className="text-red-600"
+                  className="text-red-600 dark:text-red-500 cursor-pointer dark:focus:bg-neutral-800"
                   onSelect={(e) => {
                     e.preventDefault();
                     handleLogout();
@@ -377,12 +358,14 @@ export default function Topbar() {
         </div>
       </header>
 
-      {/* PROFILE DIALOG (read-only) */}
+      {/* PROFILE DIALOG */}
       <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md dark:bg-neutral-900 dark:text-neutral-100 dark:border-neutral-700">
           <DialogHeader>
             <DialogTitle>Profile</DialogTitle>
-            <DialogDescription>Your account info</DialogDescription>
+            <DialogDescription className="dark:text-neutral-400">
+              Your account info
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-1">
@@ -390,22 +373,26 @@ export default function Topbar() {
               <Avatar className="h-12 w-12">
                 <AvatarImage src={user.avatarUrl} alt={user.name} />
                 <AvatarFallback>
-                  {user.name?.[0]?.toUpperCase() || "U"}
+                  {(user.name?.[0] || "U").toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <div className="text-base font-semibold">{user.name}</div>
-                <div className="text-sm text-neutral-500">{user.email}</div>
+                <div className="text-sm text-neutral-500 dark:text-neutral-400">
+                  {user.email}
+                </div>
                 <div className="text-[11px] font-medium text-indigo-600">
                   {user.role === "admin" ? "Admin Access" : user.role}
                 </div>
               </div>
             </div>
 
-            <Separator />
+            <Separator className="dark:bg-neutral-800" />
 
             <div className="grid gap-2">
-              <Label className="text-xs text-neutral-500">Bio</Label>
+              <Label className="text-xs text-neutral-500 dark:text-neutral-400">
+                Bio
+              </Label>
               <p className="text-sm">{user.bio || "—"}</p>
             </div>
           </div>
@@ -415,6 +402,7 @@ export default function Topbar() {
               onClick={() => {
                 setProfileOpen(false);
                 setSettingsOpen(true);
+                setForm(user);
               }}
             >
               Edit in Settings
@@ -426,15 +414,15 @@ export default function Topbar() {
       {/* SETTINGS DIALOG */}
       <Dialog
         open={settingsOpen}
-        onOpenChange={(o) => {
-          setSettingsOpen(o);
-          if (o) setForm(user); // sync form with latest
+        onOpenChange={(open) => {
+          setSettingsOpen(open);
+          if (open) setForm(user);
         }}
       >
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg dark:bg-neutral-900 dark:text-neutral-100 dark:border-neutral-700">
           <DialogHeader>
             <DialogTitle>Settings</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="dark:text-neutral-400">
               Update your profile details
             </DialogDescription>
           </DialogHeader>
@@ -448,7 +436,7 @@ export default function Topbar() {
                 <Avatar className="h-12 w-12 shrink-0">
                   <AvatarImage src={form.avatarUrl} alt={form.name} />
                   <AvatarFallback>
-                    {form.name?.[0]?.toUpperCase() || "U"}
+                    {(form.name?.[0] || "U").toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
 
@@ -477,7 +465,7 @@ export default function Topbar() {
                     onChange={handleAvatarFile}
                   />
 
-                  <p className="text-[10px] text-neutral-500 leading-snug">
+                  <p className="text-[10px] text-neutral-500 leading-snug dark:text-neutral-400">
                     JPG or PNG. Replaces your current photo.
                   </p>
                 </div>
@@ -491,15 +479,18 @@ export default function Topbar() {
               </Label>
               <Input
                 id="name"
-                className="col-span-3"
+                className="col-span-3 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100"
                 value={form.name}
                 onChange={(e) =>
-                  setForm({ ...form, name: e.target.value })
+                  setForm({
+                    ...form,
+                    name: e.target.value,
+                  })
                 }
               />
             </div>
 
-            {/* Email (read-only, from auth) */}
+            {/* Email */}
             <div className="grid grid-cols-4 items-center gap-3">
               <Label htmlFor="email" className="text-right">
                 Email
@@ -507,7 +498,7 @@ export default function Topbar() {
               <Input
                 id="email"
                 type="email"
-                className="col-span-3"
+                className="col-span-3 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100"
                 value={form.email}
                 disabled
               />
@@ -520,10 +511,13 @@ export default function Topbar() {
               </Label>
               <Textarea
                 id="bio"
-                className="col-span-3"
+                className="col-span-3 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100"
                 value={form.bio}
                 onChange={(e) =>
-                  setForm({ ...form, bio: e.target.value })
+                  setForm({
+                    ...form,
+                    bio: e.target.value,
+                  })
                 }
                 placeholder="Short bio…"
               />
@@ -534,6 +528,7 @@ export default function Topbar() {
             <Button
               variant="outline"
               onClick={() => setSettingsOpen(false)}
+              className="dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-700"
             >
               Cancel
             </Button>

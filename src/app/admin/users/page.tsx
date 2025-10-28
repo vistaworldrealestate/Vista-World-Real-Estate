@@ -82,9 +82,7 @@ export default function UsersPage() {
           .eq("id", user.id)
           .single();
 
-        setCurrentUserRole(
-          (meProfile?.role as Role | null) ?? null
-        );
+        setCurrentUserRole((meProfile?.role as Role | null) ?? null);
       }
 
       // 2. fetch all profiles
@@ -198,7 +196,7 @@ export default function UsersPage() {
       });
 
       let payload: UpdatePasswordResponse | null = null;
-      let rawText: string = "";
+      let rawText = "";
 
       try {
         payload = (await res.json()) as UpdatePasswordResponse;
@@ -275,7 +273,7 @@ export default function UsersPage() {
       });
 
       let payload: CreateUserResponse | null = null;
-      let rawText: string = "";
+      let rawText = "";
 
       try {
         payload = (await res.json()) as CreateUserResponse;
@@ -317,19 +315,21 @@ export default function UsersPage() {
 
   // ---------- JSX ----------
   return (
-    <div className="p-4 md:p-6 space-y-6 relative">
+    <div className="relative space-y-6 p-4 md:p-6 bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
       {/* Header row */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold leading-tight">Users</h1>
-          <p className="text-sm text-neutral-500">
+          <h1 className="text-xl font-semibold leading-tight text-neutral-900 dark:text-neutral-100">
+            Users
+          </h1>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
             Add teammates, set roles, and control access.
           </p>
         </div>
 
         {isAdmin && (
           <Button
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
             onClick={() => {
               resetNewUser();
               setShowAddModal(true);
@@ -341,10 +341,10 @@ export default function UsersPage() {
       </div>
 
       {/* Users table */}
-      <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-xl border bg-white text-neutral-900 shadow-sm border-neutral-200 dark:bg-neutral-900 dark:text-neutral-100 dark:border-neutral-800">
         <table className="min-w-full text-sm">
-          <thead className="bg-neutral-50 text-left text-[13px] text-neutral-500">
-            <tr className="border-b">
+          <thead className="bg-neutral-50 text-left text-[13px] text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+            <tr className="border-b border-neutral-200 dark:border-neutral-700/60">
               <th className="px-4 py-3 font-medium">User</th>
               <th className="px-4 py-3 font-medium">Role</th>
               <th className="px-4 py-3 font-medium">Status</th>
@@ -357,7 +357,7 @@ export default function UsersPage() {
             {loading ? (
               <tr>
                 <td
-                  className="px-4 py-6 text-neutral-400 text-center"
+                  className="px-4 py-6 text-center text-neutral-400 dark:text-neutral-500"
                   colSpan={5}
                 >
                   Loading...
@@ -366,7 +366,7 @@ export default function UsersPage() {
             ) : users.length === 0 ? (
               <tr>
                 <td
-                  className="px-4 py-6 text-neutral-400 text-center"
+                  className="px-4 py-6 text-center text-neutral-400 dark:text-neutral-500"
                   colSpan={5}
                 >
                   No users yet.
@@ -381,8 +381,9 @@ export default function UsersPage() {
                   <tr
                     key={u.id}
                     className={cn(
-                      "border-b last:border-b-0 hover:bg-neutral-50/50",
-                      isEditing && "bg-indigo-50/40"
+                      "border-b last:border-b-0 border-neutral-200 hover:bg-neutral-50/50 dark:border-neutral-800 dark:hover:bg-neutral-800/40",
+                      isEditing &&
+                        "bg-indigo-50/40 hover:bg-indigo-50/40 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/10"
                     )}
                   >
                     {/* USER */}
@@ -393,7 +394,7 @@ export default function UsersPage() {
                             src={u.avatarurl ?? undefined}
                             alt={u.name ?? ""}
                           />
-                          <AvatarFallback>
+                          <AvatarFallback className="bg-neutral-200 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-100">
                             {(u.name?.[0] || u.email?.[0] || "U").toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
@@ -402,22 +403,22 @@ export default function UsersPage() {
                           {isEditing ? (
                             <>
                               <input
-                                className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1 text-[13px] leading-none text-neutral-900 outline-none ring-2 ring-transparent focus:ring-indigo-500"
+                                className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1 text-[13px] leading-none text-neutral-900 outline-none ring-2 ring-transparent focus:ring-indigo-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:ring-indigo-400"
                                 value={draft?.name ?? ""}
                                 onChange={(e) =>
                                   mutateField(u.id, "name", e.target.value)
                                 }
                               />
-                              <span className="text-[11px] text-neutral-500 leading-none mt-1">
+                              <span className="mt-1 text-[11px] leading-none text-neutral-500 dark:text-neutral-400">
                                 {u.email || "no-email"}
                               </span>
                             </>
                           ) : (
                             <>
-                              <span className="font-medium text-neutral-900 text-[13px] leading-none">
+                              <span className="text-[13px] font-medium leading-none text-neutral-900 dark:text-neutral-100">
                                 {u.name || "—"}
                               </span>
-                              <span className="text-[11px] text-neutral-500 leading-none">
+                              <span className="text-[11px] leading-none text-neutral-500 dark:text-neutral-400">
                                 {u.email || "no-email"}
                               </span>
                             </>
@@ -430,14 +431,10 @@ export default function UsersPage() {
                     <td className="px-4 py-3 align-top">
                       {isEditing ? (
                         <select
-                          className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-[12px] font-medium text-neutral-700 outline-none ring-2 ring-transparent focus:ring-indigo-500"
+                          className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-[12px] font-medium text-neutral-700 outline-none ring-2 ring-transparent focus:ring-indigo-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:ring-indigo-400"
                           value={draft?.role ?? "editor"}
                           onChange={(e) =>
-                            mutateField(
-                              u.id,
-                              "role",
-                              e.target.value as Role
-                            )
+                            mutateField(u.id, "role", e.target.value as Role)
                           }
                         >
                           <option value="admin">admin</option>
@@ -448,8 +445,10 @@ export default function UsersPage() {
                           className={cn(
                             "rounded-md px-2 py-0.5 text-[11px] font-medium",
                             u.role === "admin"
-                              ? "bg-violet-100 text-violet-700"
-                              : "bg-neutral-100 text-neutral-700"
+                              ? // admin badge
+                                "bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300"
+                              : // editor badge
+                                "bg-neutral-100 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-200"
                           )}
                         >
                           {u.role || "editor"}
@@ -462,7 +461,7 @@ export default function UsersPage() {
                       {isEditing ? (
                         <>
                           <select
-                            className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-[12px] font-medium text-neutral-700 outline-none ring-2 ring-transparent focus:ring-indigo-500"
+                            className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-[12px] font-medium text-neutral-700 outline-none ring-2 ring-transparent focus:ring-indigo-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:ring-indigo-400"
                             value={draft?.active ? "active" : "disabled"}
                             onChange={(e) =>
                               mutateField(
@@ -477,40 +476,36 @@ export default function UsersPage() {
                           </select>
 
                           <div className="mt-2 flex flex-col gap-1">
-                            <label className="text-[11px] font-medium text-neutral-600">
+                            <label className="text-[11px] font-medium text-neutral-600 dark:text-neutral-300">
                               Set new password
                             </label>
                             <input
                               type="password"
                               placeholder="••••••••"
-                              className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1 text-[12px] leading-none text-neutral-900 outline-none ring-2 ring-transparent focus:ring-indigo-500"
+                              className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1 text-[12px] leading-none text-neutral-900 outline-none ring-2 ring-transparent focus:ring-indigo-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:ring-indigo-400"
                               value={draft?.password ?? ""}
                               onChange={(e) =>
-                                mutateField(
-                                  u.id,
-                                  "password",
-                                  e.target.value
-                                )
+                                mutateField(u.id, "password", e.target.value)
                               }
                             />
-                            <p className="text-[10px] text-neutral-400 leading-snug">
+                            <p className="text-[10px] leading-snug text-neutral-400 dark:text-neutral-500">
                               Leave blank to keep current password.
                             </p>
                           </div>
                         </>
                       ) : u.active === false ? (
-                        <span className="rounded-md bg-red-100 px-2 py-0.5 text-[11px] font-medium text-red-700">
+                        <span className="rounded-md bg-red-100 px-2 py-0.5 text-[11px] font-medium text-red-700 dark:bg-red-500/20 dark:text-red-300">
                           Disabled
                         </span>
                       ) : (
-                        <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                        <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
                           Active
                         </span>
                       )}
                     </td>
 
                     {/* JOINED */}
-                    <td className="px-4 py-3 align-top text-[12px] text-neutral-500">
+                    <td className="px-4 py-3 align-top text-[12px] text-neutral-500 dark:text-neutral-400">
                       {u.created_at
                         ? new Date(u.created_at).toLocaleDateString()
                         : "—"}
@@ -518,14 +513,14 @@ export default function UsersPage() {
 
                     {/* ACTIONS */}
                     <td className="px-4 py-3 align-top text-right">
-                      <div className="flex flex-col items-end gap-2 text-[12px] sm:flex-row sm:justify-end sm:items-start">
+                      <div className="flex flex-col items-end gap-2 text-[12px] sm:flex-row sm:items-start sm:justify-end">
                         {!isEditing ? (
                           <>
                             <Button
                               size="sm"
                               variant="outline"
                               className={cn(
-                                "h-7 px-2 text-[12px]",
+                                "h-7 px-2 text-[12px] border-neutral-300 text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-800",
                                 !isAdmin && "pointer-events-none opacity-40"
                               )}
                               onClick={() => startEdit(u)}
@@ -552,7 +547,7 @@ export default function UsersPage() {
                             <Button
                               size="sm"
                               variant="default"
-                              className="h-7 px-2 text-[12px] bg-indigo-600 text-white hover:bg-indigo-700"
+                              className="h-7 px-2 text-[12px] bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:text-white dark:hover:bg-indigo-600"
                               onClick={async () => {
                                 await handleSaveProfile(u.id);
                                 if (editMap[u.id]?.password) {
@@ -567,7 +562,7 @@ export default function UsersPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-7 px-2 text-[12px]"
+                              className="h-7 px-2 text-[12px] border-neutral-300 text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-800"
                               onClick={() => cancelEdit(u.id)}
                             >
                               Cancel
@@ -584,27 +579,27 @@ export default function UsersPage() {
         </table>
       </div>
 
-      <p className="text-[11px] text-neutral-400 leading-snug">
+      <p className="text-[11px] leading-snug text-neutral-400 dark:text-neutral-600">
         Only admins can edit users & passwords. Editors have read-only access.
         All actions are protected by RLS.
       </p>
 
       {/* --------------- ADD USER MODAL --------------- */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-sm rounded-xl bg-white shadow-xl border border-neutral-200 p-4 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 dark:bg-black/60">
+          <div className="w-full max-w-sm space-y-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-xl dark:border-neutral-800 dark:bg-neutral-900">
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-[15px] font-semibold text-neutral-900 leading-none">
+                <h2 className="text-[15px] font-semibold leading-none text-neutral-900 dark:text-neutral-100">
                   Invite new user
                 </h2>
-                <p className="text-[12px] text-neutral-500 leading-snug mt-1">
+                <p className="mt-1 text-[12px] leading-snug text-neutral-500 dark:text-neutral-400">
                   We’ll create their account so they can sign in.
                 </p>
               </div>
 
               <button
-                className="text-[12px] text-neutral-400 hover:text-neutral-600"
+                className="text-[12px] text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300"
                 onClick={() => {
                   if (!creating) {
                     setShowAddModal(false);
@@ -618,11 +613,11 @@ export default function UsersPage() {
             <div className="space-y-3">
               {/* Email */}
               <div className="flex flex-col gap-1">
-                <label className="text-[12px] font-medium text-neutral-700">
+                <label className="text-[12px] font-medium text-neutral-700 dark:text-neutral-200">
                   Email
                 </label>
                 <input
-                  className="rounded-md border border-neutral-300 bg-white px-2 py-2 text-[13px] text-neutral-900 outline-none ring-2 ring-transparent focus:ring-indigo-500"
+                  className="rounded-md border border-neutral-300 bg-white px-2 py-2 text-[13px] text-neutral-900 outline-none ring-2 ring-transparent focus:ring-indigo-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:ring-indigo-400"
                   value={newUser.email}
                   onChange={(e) =>
                     setNewUser((prev) => ({ ...prev, email: e.target.value }))
@@ -633,11 +628,11 @@ export default function UsersPage() {
 
               {/* Name */}
               <div className="flex flex-col gap-1">
-                <label className="text-[12px] font-medium text-neutral-700">
+                <label className="text-[12px] font-medium text-neutral-700 dark:text-neutral-200">
                   Full name
                 </label>
                 <input
-                  className="rounded-md border border-neutral-300 bg-white px-2 py-2 text-[13px] text-neutral-900 outline-none ring-2 ring-transparent focus:ring-indigo-500"
+                  className="rounded-md border border-neutral-300 bg-white px-2 py-2 text-[13px] text-neutral-900 outline-none ring-2 ring-transparent focus:ring-indigo-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:ring-indigo-400"
                   value={newUser.name}
                   onChange={(e) =>
                     setNewUser((prev) => ({ ...prev, name: e.target.value }))
@@ -648,11 +643,11 @@ export default function UsersPage() {
 
               {/* Role */}
               <div className="flex flex-col gap-1">
-                <label className="text-[12px] font-medium text-neutral-700">
+                <label className="text-[12px] font-medium text-neutral-700 dark:text-neutral-200">
                   Role
                 </label>
                 <select
-                  className="rounded-md border border-neutral-300 bg-white px-2 py-2 text-[13px] font-medium text-neutral-700 outline-none ring-2 ring-transparent focus:ring-indigo-500"
+                  className="rounded-md border border-neutral-300 bg-white px-2 py-2 text-[13px] font-medium text-neutral-700 outline-none ring-2 ring-transparent focus:ring-indigo-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:ring-indigo-400"
                   value={newUser.role}
                   onChange={(e) =>
                     setNewUser((prev) => ({
@@ -664,19 +659,19 @@ export default function UsersPage() {
                   <option value="editor">editor</option>
                   <option value="admin">admin</option>
                 </select>
-                <p className="text-[11px] text-neutral-400 leading-snug">
+                <p className="text-[11px] leading-snug text-neutral-400 dark:text-neutral-500">
                   Admin can manage other users. Editor is read-only.
                 </p>
               </div>
 
               {/* Password */}
               <div className="flex flex-col gap-1">
-                <label className="text-[12px] font-medium text-neutral-700">
+                <label className="text-[12px] font-medium text-neutral-700 dark:text-neutral-200">
                   Password
                 </label>
                 <input
                   type="password"
-                  className="rounded-md border border-neutral-300 bg-white px-2 py-2 text-[13px] text-neutral-900 outline-none ring-2 ring-transparent focus:ring-indigo-500"
+                  className="rounded-md border border-neutral-300 bg-white px-2 py-2 text-[13px] text-neutral-900 outline-none ring-2 ring-transparent focus:ring-indigo-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:ring-indigo-400"
                   value={newUser.password}
                   onChange={(e) =>
                     setNewUser((prev) => ({
@@ -686,18 +681,18 @@ export default function UsersPage() {
                   }
                   placeholder="••••••••"
                 />
-                <p className="text-[11px] text-neutral-400 leading-snug">
+                <p className="text-[11px] leading-snug text-neutral-400 dark:text-neutral-500">
                   They’ll use this to log in.
                 </p>
               </div>
 
               {/* Status */}
               <div className="flex flex-col gap-1">
-                <label className="text-[12px] font-medium text-neutral-700">
+                <label className="text-[12px] font-medium text-neutral-700 dark:text-neutral-200">
                   Status
                 </label>
                 <select
-                  className="rounded-md border border-neutral-300 bg-white px-2 py-2 text-[13px] font-medium text-neutral-700 outline-none ring-2 ring-transparent focus:ring-indigo-500"
+                  className="rounded-md border border-neutral-300 bg-white px-2 py-2 text-[13px] font-medium text-neutral-700 outline-none ring-2 ring-transparent focus:ring-indigo-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:ring-indigo-400"
                   value={newUser.active ? "active" : "disabled"}
                   onChange={(e) =>
                     setNewUser((prev) => ({
@@ -715,7 +710,7 @@ export default function UsersPage() {
             <div className="flex justify-end gap-2 pt-2">
               <Button
                 variant="outline"
-                className="h-8 px-3 text-[12px]"
+                className="h-8 px-3 text-[12px] border-neutral-300 text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-800"
                 disabled={creating}
                 onClick={() => {
                   if (!creating) {
@@ -727,7 +722,7 @@ export default function UsersPage() {
               </Button>
 
               <Button
-                className="h-8 px-3 text-[12px] bg-indigo-600 text-white hover:bg-indigo-700"
+                className="h-8 px-3 text-[12px] bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:text-white dark:hover:bg-indigo-600"
                 disabled={creating}
                 onClick={handleCreateUser}
               >
