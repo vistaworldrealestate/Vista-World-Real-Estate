@@ -6,11 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
+// ---------- Types ----------
+type Role = "admin" | "editor";
+
 type ProfileRow = {
   id: string;
   name: string | null;
   email: string | null;
-  role: "admin" | "editor" | null;
+  role: Role | null;
   avatarurl: string | null;
   active: boolean | null;
   created_at: string | null;
@@ -18,7 +21,7 @@ type ProfileRow = {
 
 type EditableState = {
   name: string;
-  role: "admin" | "editor";
+  role: Role;
   active: boolean;
   password: string; // temporary password field only in UI
 };
@@ -26,9 +29,21 @@ type EditableState = {
 type NewUserState = {
   email: string;
   name: string;
-  role: "admin" | "editor";
+  role: Role;
   password: string;
   active: boolean;
+};
+
+// expected response from /api/admin/update-user-password
+type UpdatePasswordResponse = {
+  message?: string;
+  error?: string;
+};
+
+// expected response from /api/admin/create-user
+type CreateUserResponse = {
+  error?: string;
+  profile?: ProfileRow;
 };
 
 export default function UsersPage() {
@@ -37,9 +52,7 @@ export default function UsersPage() {
   const [users, setUsers] = useState<ProfileRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [currentUserRole, setCurrentUserRole] = useState<
-    "admin" | "editor" | null
-  >(null);
+  const [currentUserRole, setCurrentUserRole] = useState<Role | null>(null);
 
   // edit state per-row
   const [editMap, setEditMap] = useState<Record<string, EditableState>>({});
@@ -70,7 +83,7 @@ export default function UsersPage() {
           .single();
 
         setCurrentUserRole(
-          (meProfile?.role as "admin" | "editor" | null) ?? null
+          (meProfile?.role as Role | null) ?? null
         );
       }
 
@@ -101,7 +114,7 @@ export default function UsersPage() {
       ...prev,
       [u.id]: {
         name: u.name ?? "",
-        role: (u.role as "admin" | "editor") ?? "editor",
+        role: (u.role as Role) ?? "editor",
         active: u.active ?? true,
         password: "",
       },
@@ -116,10 +129,10 @@ export default function UsersPage() {
     });
   }
 
-  function mutateField(
+  function mutateField<TField extends keyof EditableState>(
     id: string,
-    field: keyof EditableState,
-    value: EditableState[keyof EditableState]
+    field: TField,
+    value: EditableState[TField]
   ) {
     setEditMap((prev) => ({
       ...prev,
@@ -164,52 +177,52 @@ export default function UsersPage() {
     );
   }
 
-async function handleSavePassword(id: string) {
- const draft = editMap[id];
-  if (!draft) return;
-  if (!draft.password) return;
+  async function handleSavePassword(id: string) {
+    const draft = editMap[id];
+    if (!draft) return;
+    if (!draft.password) return;
 
-  if (draft.password.length < 6) {
-    alert("Password must be at least 6 characters.");
-    return;
-  }
+    if (draft.password.length < 6) {
+      alert("Password must be at least 6 characters.");
+      return;
+    }
 
-  try {
-    const res = await fetch("/api/admin/update-user-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_id: id,
-        new_password: draft.password,
-      }),
-    });
-
-    let payload: any = null;
-    let rawText = "";
     try {
-      payload = await res.json();
-    } catch {
-      rawText = await res.text();
-    }
-
-    if (!res.ok) {
-      console.error("Password update failed:", {
-        status: res.status,
-        payload,
-        rawText,
+      const res = await fetch("/api/admin/update-user-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: id,
+          new_password: draft.password,
+        }),
       });
-      alert(
-        (payload && (payload.message || payload.error)) ||
-          rawText ||
-          "Password update failed on server"
-      );
-    }
-  } catch (err) {
-    console.error("Password update error:", err);
-    alert("Password update request failed");
-  }
-}
 
+      let payload: UpdatePasswordResponse | null = null;
+      let rawText: string = "";
+
+      try {
+        payload = (await res.json()) as UpdatePasswordResponse;
+      } catch {
+        rawText = await res.text();
+      }
+
+      if (!res.ok) {
+        console.error("Password update failed:", {
+          status: res.status,
+          payload,
+          rawText,
+        });
+        alert(
+          (payload && (payload.message || payload.error)) ||
+            rawText ||
+            "Password update failed on server"
+        );
+      }
+    } catch (err) {
+      console.error("Password update error:", err);
+      alert("Password update request failed");
+    }
+  }
 
   async function handleDelete(id: string) {
     if (!isAdmin) return;
@@ -261,10 +274,11 @@ async function handleSavePassword(id: string) {
         }),
       });
 
-      let payload: any = null;
-      let rawText = "";
+      let payload: CreateUserResponse | null = null;
+      let rawText: string = "";
+
       try {
-        payload = await res.json();
+        payload = (await res.json()) as CreateUserResponse;
       } catch {
         rawText = await res.text();
       }
@@ -282,10 +296,12 @@ async function handleSavePassword(id: string) {
             `Failed creating user (status ${res.status})`
         );
       } else {
-        const createdProfile: ProfileRow = payload.profile;
+        const createdProfile: ProfileRow | undefined = payload?.profile;
 
-        // put new user at top of table
-        setUsers((prev) => [createdProfile, ...prev]);
+        if (createdProfile) {
+          // put new user at top of table
+          setUsers((prev) => [createdProfile, ...prev]);
+        }
 
         // close and reset
         setShowAddModal(false);
@@ -340,13 +356,19 @@ async function handleSavePassword(id: string) {
           <tbody>
             {loading ? (
               <tr>
-                <td className="px-4 py-6 text-neutral-400 text-center" colSpan={5}>
+                <td
+                  className="px-4 py-6 text-neutral-400 text-center"
+                  colSpan={5}
+                >
                   Loading...
                 </td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td className="px-4 py-6 text-neutral-400 text-center" colSpan={5}>
+                <td
+                  className="px-4 py-6 text-neutral-400 text-center"
+                  colSpan={5}
+                >
                   No users yet.
                 </td>
               </tr>
@@ -414,7 +436,7 @@ async function handleSavePassword(id: string) {
                             mutateField(
                               u.id,
                               "role",
-                              e.target.value as "admin" | "editor"
+                              e.target.value as Role
                             )
                           }
                         >
@@ -635,7 +657,7 @@ async function handleSavePassword(id: string) {
                   onChange={(e) =>
                     setNewUser((prev) => ({
                       ...prev,
-                      role: e.target.value as "admin" | "editor",
+                      role: e.target.value as Role,
                     }))
                   }
                 >

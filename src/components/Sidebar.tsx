@@ -6,9 +6,7 @@ import {
   LayoutDashboard,
   Users,
   Contact2,
-  FileText,
   Newspaper,
-  CreditCard,
   Contact,
 } from "lucide-react";
 import { motion } from "framer-motion";

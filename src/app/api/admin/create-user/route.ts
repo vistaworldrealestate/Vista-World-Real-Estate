@@ -1,16 +1,43 @@
-export const dynamic = 'force-dynamic'; // 👈 important for Next.js 15
+export const dynamic = "force-dynamic"; // 👈 important for Next.js 15
 
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
-import { supabaseAdmin } from '@/lib/supabaseAdmin';
+import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-function respondJson(body: Record<string, any>, status: number) {
+// --- Types ---
+type Role = "admin" | "editor";
+
+type ProfileRow = {
+  id: string;
+  name: string | null;
+  email: string | null;
+  role: Role | null;
+  avatarurl: string | null;
+  active: boolean | null;
+  created_at: string | null;
+};
+
+type ErrorResponse = {
+  error: string;
+};
+
+type SuccessResponse = {
+  profile: ProfileRow;
+};
+
+type JsonResponse = ErrorResponse | SuccessResponse;
+
+// helper to send typed JSON
+function respondJson(body: JsonResponse, status: number) {
   return NextResponse.json(body, { status });
 }
 
 // helper to read caller session + role using anon client + cookies
-async function getCallerAndRole() {
+async function getCallerAndRole(): Promise<{
+  caller: { id: string } | null;
+  role: Role | null;
+}> {
   // Next.js 15 needs cookies() awaited in dynamic routes
   const cookieStore = await cookies();
 
@@ -40,7 +67,7 @@ async function getCallerAndRole() {
   } = await supabaseForAuthCheck.auth.getUser();
 
   if (authErr) {
-    console.error('❌ auth.getUser error:', authErr);
+    console.error("❌ auth.getUser error:", authErr);
   }
   if (!caller) {
     return { caller: null, role: null };
@@ -49,16 +76,22 @@ async function getCallerAndRole() {
   // look up their role
   const { data: callerProfile, error: roleErr } =
     await supabaseForAuthCheck
-      .from('profiles')
-      .select('role')
-      .eq('id', caller.id)
+      .from("profiles")
+      .select("role")
+      .eq("id", caller.id)
       .single();
 
   if (roleErr) {
-    console.error('❌ role lookup error:', roleErr);
+    console.error("❌ role lookup error:", roleErr);
   }
 
-  return { caller, role: callerProfile?.role ?? null };
+  return {
+    caller: { id: caller.id },
+    role:
+      callerProfile?.role === "admin" || callerProfile?.role === "editor"
+        ? callerProfile.role
+        : null,
+  };
 }
 
 export async function POST(req: Request) {
@@ -67,34 +100,49 @@ export async function POST(req: Request) {
     !process.env.NEXT_PUBLIC_SUPABASE_URL ||
     !process.env.SUPABASE_SERVICE_ROLE_KEY
   ) {
-    return respondJson({ error: 'Server misconfigured' }, 500);
+    return respondJson({ error: "Server misconfigured" }, 500);
   }
 
   // 1. admin gate
   const { caller, role } = await getCallerAndRole();
 
   if (!caller) {
-    return respondJson({ error: 'Not signed in' }, 401);
+    return respondJson({ error: "Not signed in" }, 401);
   }
-  if (role !== 'admin') {
+  if (role !== "admin") {
     return respondJson(
-      { error: 'Forbidden: only admins can create users' },
+      { error: "Forbidden: only admins can create users" },
       403
     );
   }
 
   // 2. parse body
-  let body;
+  let body: unknown;
   try {
     body = await req.json();
   } catch {
-    return respondJson({ error: 'Invalid JSON body' }, 400);
+    return respondJson({ error: "Invalid JSON body" }, 400);
   }
 
-  const { email, password, name, role: newUserRole, active } = body || {};
+  // runtime validation of body
+  // (keeps TS happy without zod)
+  const {
+    email,
+    password,
+    name,
+    role: newUserRole,
+    active,
+  } = body as {
+    email?: string;
+    password?: string;
+    name?: string;
+    role?: string;
+    active?: boolean;
+  };
+
   if (!email || !password || !name) {
     return respondJson(
-      { error: 'email, password, and name are required' },
+      { error: "email, password, and name are required" },
       400
     );
   }
@@ -114,7 +162,7 @@ export async function POST(req: Request) {
       {
         error:
           createAuthErr?.message ||
-          'Auth creation failed (auth.admin.createUser)',
+          "Auth creation failed (auth.admin.createUser)",
       },
       500
     );
@@ -127,23 +175,21 @@ export async function POST(req: Request) {
     data: insertedProfile,
     error: insertErr,
   } = await supabaseAdmin
-    .from('profiles')
+    .from("profiles")
     .insert([
       {
         id: newUserId,
         email,
         name,
         role:
-          newUserRole === 'admin' || newUserRole === 'editor'
-            ? newUserRole
-            : 'editor',
+          newUserRole === "admin" || newUserRole === "editor"
+            ? (newUserRole as Role)
+            : "editor",
         active: active ?? true,
         avatarurl: null,
       },
     ])
-    .select(
-      'id, name, email, role, avatarurl, active, created_at'
-    )
+    .select("id, name, email, role, avatarurl, active, created_at")
     .single();
 
   if (insertErr || !insertedProfile) {
@@ -151,11 +197,25 @@ export async function POST(req: Request) {
       {
         error:
           insertErr?.message ||
-          'Profile insert failed (profiles.insert)',
+          "Profile insert failed (profiles.insert)",
       },
       500
     );
   }
 
-  return respondJson({ profile: insertedProfile }, 200);
+  // success
+  return respondJson(
+    {
+      profile: {
+        id: insertedProfile.id,
+        name: insertedProfile.name,
+        email: insertedProfile.email,
+        role: insertedProfile.role,
+        avatarurl: insertedProfile.avatarurl,
+        active: insertedProfile.active,
+        created_at: insertedProfile.created_at,
+      },
+    },
+    200
+  );
 }
