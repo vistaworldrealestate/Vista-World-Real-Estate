@@ -39,7 +39,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 
 import {
-  Bell,
   ChevronDown,
   LayoutDashboard,
   Menu,
@@ -53,7 +52,7 @@ import {
 import Sidebar from "./Sidebar";
 import { createSupabaseBrowser } from "@/lib/supabaseClient";
 import { useProfile } from "@/hooks/useProfile";
-import { ModeToggle } from "@/components/ModeToggle"; // <---- ADD THIS (we'll define it below)
+import { ModeToggle } from "@/components/ModeToggle";
 
 /* ---------- Local UI types ---------- */
 type EditableUser = {
@@ -160,7 +159,7 @@ export default function Topbar() {
     setForm((prev) => ({ ...prev, avatarUrl: publicUrl }));
   }
 
-  // Save settings
+  // Save settings -> upsert profiles
   async function handleSaveSettings() {
     setUser(form);
 
@@ -265,16 +264,6 @@ export default function Topbar() {
               />
             </div>
 
-            {/* Notifications */}
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Notifications"
-              className="text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
-            >
-              <Bell className="h-5 w-5" />
-            </Button>
-
             {/* Theme toggle (dark / light) */}
             <ModeToggle />
 
@@ -314,7 +303,7 @@ export default function Topbar() {
                     {user.email}
                   </span>
                   <span className="text-[11px] text-indigo-600 font-medium">
-                    {user.role === 'admin' ? 'Admin Access' : user.role}
+                    {user.role === "admin" ? "Admin Access" : user.role}
                   </span>
                 </DropdownMenuLabel>
 

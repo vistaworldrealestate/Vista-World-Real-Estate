@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,29 +10,29 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import Link from "next/link";
+import { ModeToggle } from "@/components/ModeToggle";
 
 export default function RealEstateHomePage() {
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-900">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-900 dark:from-neutral-900 dark:via-neutral-900 dark:to-black dark:text-neutral-100">
       {/* Navbar */}
-      <header className="sticky top-0 z-20 bg-white/70 backdrop-blur border-b border-slate-200 px-4 md:px-8">
+      <header className="sticky top-0 z-20 bg-white/70 backdrop-blur border-b border-slate-200 px-4 md:px-8 dark:bg-neutral-900/70 dark:border-neutral-800">
         <nav className="flex h-16 items-center justify-between max-w-7xl mx-auto">
           {/* Brand */}
           <Link
             href="#"
-            className="flex items-baseline gap-1 font-semibold text-slate-900"
+            className="flex items-baseline gap-1 font-semibold text-slate-900 dark:text-neutral-100"
           >
             <span className="text-xl tracking-tight">Vista World</span>
             <span className="text-xl text-indigo-600">Real Estate</span>
           </Link>
 
           {/* Links */}
-          <ul className="hidden md:flex items-center gap-6 text-sm text-slate-600 font-medium">
+          <ul className="hidden md:flex items-center gap-6 text-sm text-slate-600 font-medium dark:text-neutral-400">
             <li>
               <Link
                 href="#listings"
-                className="hover:text-slate-900 transition-colors"
+                className="hover:text-slate-900 dark:hover:text-neutral-100 transition-colors"
               >
                 Buy
               </Link>
@@ -39,7 +40,7 @@ export default function RealEstateHomePage() {
             <li>
               <Link
                 href="#listings"
-                className="hover:text-slate-900 transition-colors"
+                className="hover:text-slate-900 dark:hover:text-neutral-100 transition-colors"
               >
                 Rent
               </Link>
@@ -47,7 +48,7 @@ export default function RealEstateHomePage() {
             <li>
               <Link
                 href="#about"
-                className="hover:text-slate-900 transition-colors"
+                className="hover:text-slate-900 dark:hover:text-neutral-100 transition-colors"
               >
                 About
               </Link>
@@ -55,22 +56,26 @@ export default function RealEstateHomePage() {
             <li>
               <Link
                 href="#contact"
-                className="hover:text-slate-900 transition-colors"
+                className="hover:text-slate-900 dark:hover:text-neutral-100 transition-colors"
               >
                 Contact
               </Link>
             </li>
           </ul>
 
-          {/* CTAs */}
+          {/* CTAs + Theme toggle */}
           <div className="flex items-center gap-2">
-            <Button className="rounded-2xl px-4 py-2 text-xs md:text-sm font-medium shadow-sm">
+            {/* theme toggle first so it's always visible even on mobile */}
+            <ModeToggle />
+
+            <Button className="rounded-2xl px-4 py-2 text-xs md:text-sm font-medium shadow-sm dark:bg-indigo-600 dark:text-white dark:hover:bg-indigo-500">
               List your property
             </Button>
+
             <Link href="/login">
               <Button
                 variant="outline"
-                className="rounded-2xl px-4 py-2 text-xs md:text-sm font-medium"
+                className="rounded-2xl px-4 py-2 text-xs md:text-sm font-medium dark:border-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
               >
                 Admin Login
               </Button>
@@ -80,7 +85,7 @@ export default function RealEstateHomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative w-full flex-1 bg-slate-900 text-white">
+      <section className="relative w-full flex-1 bg-slate-900 text-white dark:bg-black">
         {/* BG image */}
         <div
           className="absolute inset-0 bg-cover bg-center"
@@ -90,7 +95,7 @@ export default function RealEstateHomePage() {
           }}
         />
         {/* radial overlay */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(15,23,42,0.4)_0%,rgba(15,23,42,0.8)_60%,rgba(15,23,42,0.95)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(15,23,42,0.4)_0%,rgba(15,23,42,0.8)_60%,rgba(15,23,42,0.95)_100%)] dark:bg-[radial-gradient(circle_at_20%_20%,rgba(0,0,0,0.4)_0%,rgba(0,0,0,0.8)_60%,rgba(0,0,0,0.95)_100%)]" />
 
         <div className="relative max-w-7xl mx-auto px-4 md:px-8 py-16 lg:py-24 flex flex-col lg:flex-row gap-10">
           {/* Left content */}
@@ -115,28 +120,29 @@ export default function RealEstateHomePage() {
             </p>
 
             {/* Quick Search Card */}
-            <Card className="rounded-2xl border-white/10 bg-white/10 backdrop-blur-xl text-slate-900 shadow-xl max-w-lg">
+            <Card className="rounded-2xl border-white/10 bg-white/10 backdrop-blur-xl text-slate-900 shadow-xl max-w-lg dark:bg-neutral-900/60 dark:border-neutral-700 dark:text-neutral-100 dark:backdrop-blur-xl">
               <CardHeader className="pb-2">
-                <CardTitle className="text-base font-semibold text-white">
+                <CardTitle className="text-base font-semibold text-white dark:text-neutral-100">
                   Start your search
                 </CardTitle>
-                <CardDescription className="text-[11px] text-slate-300">
+                <CardDescription className="text-[11px] text-slate-300 dark:text-neutral-400">
                   City, budget, or property type
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col md:flex-row gap-3 md:gap-2">
                 <input
-                  className="flex-1 rounded-xl border border-white/20 bg-white/80 px-3 py-2 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="flex-1 rounded-xl border border-white/20 bg-white/80 px-3 py-2 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
+                  dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:ring-indigo-500 dark:focus:border-indigo-500"
                   placeholder="Dubai Marina, ₹90L - ₹1.5Cr, 3BHK..."
                 />
-                <Button className="rounded-xl text-sm font-medium w-full md:w-auto">
+                <Button className="rounded-xl text-sm font-medium w-full md:w-auto dark:bg-indigo-600 dark:text-white dark:hover:bg-indigo-500">
                   Search
                 </Button>
               </CardContent>
             </Card>
 
             {/* badges row */}
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-[11px] text-slate-300">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-[11px] text-slate-300 dark:text-neutral-300">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-green-400" />
                 <span>Verified listings only</span>
@@ -160,7 +166,7 @@ export default function RealEstateHomePage() {
             className="flex-1 grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 auto-rows-[1fr]"
           >
             {/* Card 1 */}
-            <Card className="relative rounded-2xl border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden shadow-xl text-white">
+            <Card className="relative rounded-2xl border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden shadow-xl text-white dark:bg-neutral-800/60 dark:border-neutral-700 dark:text-neutral-100">
               <div
                 className="absolute inset-0 bg-cover bg-center opacity-30"
                 style={{
@@ -170,21 +176,21 @@ export default function RealEstateHomePage() {
               />
               <CardContent className="relative p-6 flex flex-col justify-between h-full">
                 <div className="flex flex-col gap-2">
-                  <div className="text-[10px] w-fit bg-white/20 text-white font-semibold rounded-full px-2 py-1 backdrop-blur">
+                  <div className="text-[10px] w-fit bg-white/20 text-white font-semibold rounded-full px-2 py-1 backdrop-blur dark:bg-white/10 dark:text-white">
                     Featured Area
                   </div>
-                  <div className="font-semibold text-white text-lg leading-tight drop-shadow">
+                  <div className="font-semibold text-white text-lg leading-tight drop-shadow dark:text-neutral-100">
                     Bandra West, Mumbai
                   </div>
-                  <div className="text-slate-200 text-sm leading-relaxed">
+                  <div className="text-slate-200 text-sm leading-relaxed dark:text-neutral-300">
                     Cafes • Nightlife • Sea view. Avg 2BHK ~ ₹1.4Cr.
                   </div>
                 </div>
-                <div className="mt-4 flex items-center justify-between text-xs text-slate-200">
+                <div className="mt-4 flex items-center justify-between text-xs text-slate-200 dark:text-neutral-300">
                   <span>32 new listings</span>
                   <Button
                     variant="outline"
-                    className="rounded-xl h-8 text-xs px-3 bg-white/10 border-white/30 text-white hover:bg-white/20"
+                    className="rounded-xl h-8 text-xs px-3 bg-white/10 border-white/30 text-white hover:bg-white/20 dark:bg-neutral-900/40 dark:border-neutral-600 dark:text-neutral-100 dark:hover:bg-neutral-900/60"
                   >
                     View
                   </Button>
@@ -193,7 +199,7 @@ export default function RealEstateHomePage() {
             </Card>
 
             {/* Card 2 */}
-            <Card className="relative rounded-2xl border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden shadow-xl text-white">
+            <Card className="relative rounded-2xl border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden shadow-xl text-white dark:bg-neutral-800/60 dark:border-neutral-700 dark:text-neutral-100">
               <div
                 className="absolute inset-0 bg-cover bg-center opacity-30"
                 style={{
@@ -203,26 +209,26 @@ export default function RealEstateHomePage() {
               />
               <CardContent className="relative p-6 flex flex-col justify-between h-full">
                 <div className="flex flex-col gap-2">
-                  <div className="text-[10px] w-fit bg-green-400 text-slate-900 font-semibold rounded-full px-2 py-1">
+                  <div className="text-[10px] w-fit bg-green-400 text-slate-900 font-semibold rounded-full px-2 py-1 dark:bg-green-400 dark:text-slate-900">
                     Hot Deal
                   </div>
-                  <div className="font-semibold text-white text-lg leading-tight drop-shadow">
+                  <div className="font-semibold text-white text-lg leading-tight drop-shadow dark:text-neutral-100">
                     3BHK, Lake View, Powai
                   </div>
-                  <div className="text-slate-200 text-sm leading-relaxed">
+                  <div className="text-slate-200 text-sm leading-relaxed dark:text-neutral-300">
                     Semi-furnished • Gym • Pool • Gated tower
                   </div>
                 </div>
-                <div className="mt-4 flex items-end justify-between text-xs text-slate-200">
+                <div className="mt-4 flex items-end justify-between text-xs text-slate-200 dark:text-neutral-300">
                   <div className="flex flex-col leading-tight">
-                    <span className="text-white font-semibold text-base drop-shadow">
+                    <span className="text-white font-semibold text-base drop-shadow dark:text-neutral-100">
                       ₹2.1Cr
                     </span>
                     <span>all incl.</span>
                   </div>
                   <Button
                     variant="outline"
-                    className="rounded-xl h-8 text-xs px-3 bg-white/10 border-white/30 text-white hover:bg-white/20"
+                    className="rounded-xl h-8 text-xs px-3 bg-white/10 border-white/30 text-white hover:bg-white/20 dark:bg-neutral-900/40 dark:border-neutral-600 dark:text-neutral-100 dark:hover:bg-neutral-900/60"
                   >
                     Details
                   </Button>
@@ -231,7 +237,7 @@ export default function RealEstateHomePage() {
             </Card>
 
             {/* Card 3 */}
-            <Card className="relative rounded-2xl border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden shadow-xl text-white sm:col-span-2 xl:col-span-2">
+            <Card className="relative rounded-2xl border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden shadow-xl text-white sm:col-span-2 xl:col-span-2 dark:bg-neutral-800/60 dark:border-neutral-700 dark:text-neutral-100">
               <div
                 className="absolute inset-0 bg-cover bg-center opacity-20"
                 style={{
@@ -241,17 +247,17 @@ export default function RealEstateHomePage() {
               />
               <CardContent className="relative p-6 flex flex-col justify-between h-full lg:flex-row lg:items-center gap-4">
                 <div className="flex-1">
-                  <div className="text-[10px] w-fit bg-slate-900/60 text-white font-semibold rounded-full px-2 py-1 border border-white/20 backdrop-blur">
+                  <div className="text-[10px] w-fit bg-slate-900/60 text-white font-semibold rounded-full px-2 py-1 border border-white/20 backdrop-blur dark:bg-black/60 dark:border-neutral-600 dark:text-neutral-100">
                     Service
                   </div>
-                  <div className="mt-2 font-semibold text-white text-lg leading-tight drop-shadow">
+                  <div className="mt-2 font-semibold text-white text-lg leading-tight drop-shadow dark:text-neutral-100">
                     Need to sell fast?
                   </div>
-                  <div className="text-slate-200 text-sm leading-relaxed max-w-xs">
+                  <div className="text-slate-200 text-sm leading-relaxed max-w-xs dark:text-neutral-300">
                     Get a free valuation and reach 50k+ verified buyers.
                   </div>
                 </div>
-                <Button className="rounded-xl text-sm font-medium w-full lg:w-auto">
+                <Button className="rounded-xl text-sm font-medium w-full lg:w-auto dark:bg-indigo-600 dark:text-white dark:hover:bg-indigo-500">
                   Get valuation
                 </Button>
               </CardContent>
@@ -261,54 +267,82 @@ export default function RealEstateHomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-white text-slate-900 border-t border-slate-200">
+      <footer className="bg-white text-slate-900 border-t border-slate-200 dark:bg-black dark:text-neutral-200 dark:border-neutral-800">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 grid gap-10 md:grid-cols-4 text-sm">
           <div className="md:col-span-2 flex flex-col gap-4 max-w-sm">
             <Link
               href="#"
-              className="flex items-baseline gap-1 font-semibold text-slate-900"
+              className="flex items-baseline gap-1 font-semibold text-slate-900 dark:text-neutral-100"
             >
               <span className="text-lg tracking-tight">Vista World</span>
               <span className="text-lg text-indigo-600">Real Estate</span>
             </Link>
-            <p className="text-slate-500 leading-relaxed text-xs">
+            <p className="text-slate-500 leading-relaxed text-xs dark:text-neutral-400">
               Helping people move smarter. Transparent listings, verified
               sellers, and real humans to talk to.
             </p>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-slate-400 dark:text-neutral-600">
               © {new Date().getFullYear()} Vista World Real Estate. All rights
               reserved.
             </p>
           </div>
 
           <div className="flex flex-col gap-3">
-            <div className="text-slate-900 font-semibold text-sm">Explore</div>
-            <Link className="text-slate-500 hover:text-slate-900" href="#">
+            <div className="text-slate-900 font-semibold text-sm dark:text-neutral-100">
+              Explore
+            </div>
+            <Link
+              className="text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+              href="#"
+            >
               Buy
             </Link>
-            <Link className="text-slate-500 hover:text-slate-900" href="#">
+            <Link
+              className="text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+              href="#"
+            >
               Rent
             </Link>
-            <Link className="text-slate-500 hover:text-slate-900" href="#">
+            <Link
+              className="text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+              href="#"
+            >
               Commercial
             </Link>
-            <Link className="text-slate-500 hover:text-slate-900" href="#">
+            <Link
+              className="text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+              href="#"
+            >
               Luxury
             </Link>
           </div>
 
           <div className="flex flex-col gap-3">
-            <div className="text-slate-900 font-semibold text-sm">Support</div>
-            <Link className="text-slate-500 hover:text-slate-900" href="#">
+            <div className="text-slate-900 font-semibold text-sm dark:text-neutral-100">
+              Support
+            </div>
+            <Link
+              className="text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+              href="#"
+            >
               Help center
             </Link>
-            <Link className="text-slate-500 hover:text-slate-900" href="#">
+            <Link
+              className="text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+              href="#"
+            >
               List property
             </Link>
-            <Link className="text-slate-500 hover:text-slate-900" href="#">
+            <Link
+              className="text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+              href="#"
+            >
               Privacy
             </Link>
-            <Link className="text-slate-500 hover:text-slate-900" href="#">
+            <Link
+              className="text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+              href="#"
+            >
               Terms
             </Link>
           </div>
