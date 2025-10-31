@@ -53,8 +53,14 @@ type LeadRow = {
   last_contacted: string; // ISO date yyyy-mm-dd
   project: string | null;
   notes: string | null;
+
+  // audit columns
+  created_by: string | null;
+  created_by_name: string | null;
+  updated_by: string | null;
+  updated_by_name: string | null;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
   deleted_at: string | null;
 };
 
@@ -68,6 +74,11 @@ type Lead = {
   lastContacted: string; // dd/mm/yyyy (display)
   project: string;
   notes: string;
+
+  // audit for UI
+  editedBy?: string;
+  editedAt?: string;
+  createdBy?: string;
 };
 
 // ---------------- Utils ----------------
@@ -76,6 +87,10 @@ function toDisplayDate(iso?: string | null) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleDateString("en-GB");
+}
+function toOptionalDisplayDate(iso?: string | null) {
+  const v = toDisplayDate(iso);
+  return v === "-" ? undefined : v;
 }
 
 function todayISODate() {
@@ -97,6 +112,11 @@ function fromLeadRow(r: LeadRow): Lead {
     lastContacted: toDisplayDate(r.last_contacted ?? r.updated_at),
     project: r.project ?? "",
     notes: r.notes ?? "",
+
+    // audit
+    editedBy: r.updated_by_name ?? undefined,
+    editedAt: toOptionalDisplayDate(r.updated_at),
+    createdBy: r.created_by_name ?? undefined,
   };
 }
 
@@ -639,6 +659,9 @@ export default function LeadsPage() {
               lead.lastContacted,
               lead.project,
               lead.notes,
+              lead.createdBy ?? "",
+              lead.editedBy ?? "",
+              lead.editedAt ?? "",
             ]
               .join(" ")
               .toLowerCase()
@@ -891,7 +914,18 @@ export default function LeadsPage() {
                       )}
                     >
                       <td className="py-4 pl-4 pr-2 align-top font-medium leading-[1.2]">
-                        {lead.name}
+                        <div className="flex flex-col">
+                          <span className="truncate">{lead.name}</span>
+                          <span className="text-[11px] font-normal text-muted-foreground">
+                            ID #{lead.id.slice(0, 8)}
+                          </span>
+
+                          {(lead.editedBy || lead.editedAt) && (
+                            <div className="mt-1 text-[11px] text-muted-foreground">
+                              Edited{lead.editedBy ? ` by ${lead.editedBy}` : ""}{lead.editedAt ? ` on ${lead.editedAt}` : ""}
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="break-all py-4 px-2 align-top leading-[1.2] text-muted-foreground">
                         {lead.email || "-"}

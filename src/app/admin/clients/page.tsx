@@ -56,9 +56,13 @@ type ClientRow = {
   joined: string; // date (yyyy-mm-dd) from DB
   active: boolean;
 
+  // audit columns (ensure present in DB)
   created_by: string | null;
+  created_by_name: string | null;
+  updated_by: string | null;
+  updated_by_name: string | null;
   created_at: string;
-  updated_at: string;
+  updated_at: string | null;
   deleted_at: string | null;
 };
 
@@ -72,13 +76,23 @@ type Client = {
   followUp: FollowUpType;
   joined: string; // dd/mm/yyyy for UI
   active: boolean;
+
+  // Optional audit meta rendered in UI
+  editedBy?: string;
+  editedAt?: string;
+  createdBy?: string;
 };
+
 
 function toDisplayDate(isoDate?: string | null) {
   if (!isoDate) return "-";
   const d = new Date(isoDate);
   if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleDateString("en-GB");
+}
+function toOptionalDisplayDate(iso?: string | null | undefined) {
+  const v = toDisplayDate(iso);
+  return v === "-" ? undefined : v;
 }
 
 function fromRow(r: ClientRow): Client {
@@ -92,6 +106,11 @@ function fromRow(r: ClientRow): Client {
     followUp: r.follow_up,
     joined: toDisplayDate(r.joined),
     active: r.active,
+
+    // audit
+    editedBy: r.updated_by_name ?? undefined,
+    editedAt: toOptionalDisplayDate(r.updated_at),
+    createdBy: r.created_by_name ?? undefined,
   };
 }
 
@@ -246,6 +265,9 @@ export default function ClientsPage() {
               c.followUp,
               c.joined,
               c.active ? "yes" : "no",
+              c.createdBy ?? "",
+              c.editedBy ?? "",
+              c.editedAt ?? "",
             ]
               .join(" ")
               .toLowerCase()
@@ -546,6 +568,12 @@ export default function ClientsPage() {
                           <span className="text-[11px] font-normal text-muted-foreground dark:text-neutral-500">
                             ID #{c.id.slice(0, 8)}
                           </span>
+
+                          {(c.editedBy || c.editedAt) && (
+                            <div className="mt-1 text-[11px] text-muted-foreground dark:text-neutral-400">
+                              Edited{c.editedBy ? ` by ${c.editedBy}` : ""}{c.editedAt ? ` on ${c.editedAt}` : ""}
+                            </div>
+                          )}
                         </div>
                       </td>
 
