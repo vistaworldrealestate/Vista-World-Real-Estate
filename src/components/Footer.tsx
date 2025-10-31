@@ -9,7 +9,7 @@ export default function Footer() {
         dark:bg-neutral-900/70 dark:border-neutral-800 dark:text-neutral-400
         md:pl-60
       "
-    >
+    >    
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 sm:flex-row">
         <p>
           © {new Date().getFullYear()}{" "}

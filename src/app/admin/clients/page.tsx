@@ -33,77 +33,67 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { Search, Plus, Trash2 } from "lucide-react";
 
+import { createSupabaseBrowser } from "@/lib/supabaseClient";
+
 // ---------------- Types ----------------
+type ServiceType =
+  | "Property Sale"
+  | "Lease / Rent"
+  | "Site Visit"
+  | "Home Loan Assist"
+  | "Registry / Legal";
+
+type FollowUpType = "Daily" | "Weekly" | "15 days" | "30 days" | "On Demand";
+
+type ClientRow = {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string;
+  project: string | null;
+  service: ServiceType;
+  follow_up: FollowUpType;
+  joined: string; // date (yyyy-mm-dd) from DB
+  active: boolean;
+
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+};
+
 type Client = {
   id: string;
   name: string;
   email: string;
   phone: string;
   project: string;
-  service: string;
-  followUp: string;
-  joined: string;
+  service: ServiceType;
+  followUp: FollowUpType;
+  joined: string; // dd/mm/yyyy for UI
   active: boolean;
 };
 
-// ---------------- Dummy Data ----------------
-const INITIAL_CLIENTS: Client[] = [
-  {
-    id: "1",
-    name: "Sandeep Singh",
-    email: "-",
-    phone: "+91 98111 22233",
-    project: "Vista Heights • Tower B 904",
-    service: "Property Sale",
-    followUp: "Weekly",
-    joined: "09/10/2025",
-    active: true,
-  },
-  {
-    id: "2",
-    name: "Priya Patel",
-    email: "priya.patel@example.com",
-    phone: "+91 98765 44321",
-    project: "Sunrise Residency • Phase 2",
-    service: "Site Visit",
-    followUp: "Daily",
-    joined: "18/09/2025",
-    active: true,
-  },
-  {
-    id: "3",
-    name: "Rahul Verma",
-    email: "rahul.v@investorsmail.com",
-    phone: "+91 90909 10101",
-    project: "Skyline Business Park • Unit 302",
-    service: "Lease / Rent",
-    followUp: "15 days",
-    joined: "02/08/2025",
-    active: false,
-  },
-  {
-    id: "4",
-    name: "Neha Sharma",
-    email: "neha.sharma@example.com",
-    phone: "+91 70012 88994",
-    project: "Green Valley Villas • Plot 14",
-    service: "Home Loan Assist",
-    followUp: "30 days",
-    joined: "27/07/2025",
-    active: true,
-  },
-  {
-    id: "5",
-    name: "Amit Khurana",
-    email: "amit.khurana@example.com",
-    phone: "+91 98220 55667",
-    project: "Palm County • Sec-92",
-    service: "Registry / Legal",
-    followUp: "On Demand",
-    joined: "11/07/2025",
-    active: true,
-  },
-];
+function toDisplayDate(isoDate?: string | null) {
+  if (!isoDate) return "-";
+  const d = new Date(isoDate);
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleDateString("en-GB");
+}
+
+function fromRow(r: ClientRow): Client {
+  return {
+    id: r.id,
+    name: r.name,
+    email: r.email ?? "-",
+    phone: r.phone,
+    project: r.project ?? "—",
+    service: r.service,
+    followUp: r.follow_up,
+    joined: toDisplayDate(r.joined),
+    active: r.active,
+  };
+}
 
 // ---------------------------------------------
 // Reusable SidePanel (drawer style using Dialog)
@@ -177,13 +167,17 @@ function SidePanel({
 // PAGE
 // ---------------------------------------------
 export default function ClientsPage() {
+  const supabase = React.useMemo(() => createSupabaseBrowser(), []);
+
   // table data
-  const [clients, setClients] = React.useState<Client[]>(INITIAL_CLIENTS);
+  const [clients, setClients] = React.useState<Client[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
 
   // filters
   const [search, setSearch] = React.useState("");
   const [serviceFilter, setServiceFilter] =
-    React.useState<"all" | string>("all");
+    React.useState<"all" | ServiceType>("all");
 
   // drawer state
   const [openAdd, setOpenAdd] = React.useState(false);
@@ -193,10 +187,42 @@ export default function ClientsPage() {
   const [formPhone, setFormPhone] = React.useState("");
   const [formEmail, setFormEmail] = React.useState("");
   const [formProject, setFormProject] = React.useState("");
-  const [formService, setFormService] = React.useState("Property Sale");
-  const [formFollowUp, setFormFollowUp] = React.useState("Weekly");
+  const [formService, setFormService] =
+    React.useState<ServiceType>("Property Sale");
+  const [formFollowUp, setFormFollowUp] =
+    React.useState<FollowUpType>("Weekly");
   const [formActive, setFormActive] = React.useState(true);
 
+  // ---- fetch
+  async function fetchClients() {
+    setLoading(true);
+    setErrorMsg(null);
+
+    // Only non-deleted shown by default because of policy; but be explicit:
+    const { data, error } = await supabase
+      .from("clients")
+      .select("*")
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      setErrorMsg(error.message);
+      setClients([]);
+      setLoading(false);
+      return;
+    }
+
+    const list = (data as ClientRow[]).map(fromRow);
+    setClients(list);
+    setLoading(false);
+  }
+
+  React.useEffect(() => {
+    fetchClients();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ---- derived
   const activeCount = React.useMemo(
     () => clients.filter((c) => c.active).length,
     [clients]
@@ -229,43 +255,38 @@ export default function ClientsPage() {
     });
   }, [clients, search, serviceFilter]);
 
-  function updateClient(
-    id: string,
-    patch: Partial<Pick<Client, "service" | "followUp">>
-  ) {
-    setClients((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, ...patch } : c))
-    );
-  }
-
-  function handleDelete(id: string) {
-    setClients((prev) => prev.filter((c) => c.id !== id));
-  }
-
-  function handleResetFilters() {
-    setSearch("");
-    setServiceFilter("all");
-  }
-
-  function handleSaveClient() {
+  // ---- CRUD actions
+  async function handleSaveClient() {
     if (!formName.trim() || !formPhone.trim()) {
       alert("Name and phone are required");
       return;
     }
 
-    const newClient: Client = {
-      id: String(clients.length + 1),
-      name: formName.trim(),
-      phone: formPhone.trim(),
-      email: formEmail.trim() || "-",
-      project: formProject.trim() || "—",
-      service: formService,
-      followUp: formFollowUp,
-      joined: new Date().toLocaleDateString("en-GB"),
-      active: formActive,
-    };
+    const { data, error } = await supabase
+      .from("clients")
+      .insert([
+        {
+          name: formName.trim(),
+          phone: formPhone.trim(),
+          email: formEmail.trim() || null,
+          project: formProject.trim() || null,
+          service: formService,
+          follow_up: formFollowUp,
+          active: formActive,
+          // joined default: today (DB), but we can pass explicit date if you prefer:
+          // joined: new Date().toISOString().slice(0,10),
+        },
+      ])
+      .select("*")
+      .single();
 
-    setClients((prev) => [newClient, ...prev]);
+    if (error) {
+      alert("Failed creating client: " + error.message);
+      return;
+    }
+
+    const created = fromRow(data as ClientRow);
+    setClients((prev) => [created, ...prev]);
 
     // reset form fields
     setFormName("");
@@ -277,6 +298,46 @@ export default function ClientsPage() {
     setFormActive(true);
 
     setOpenAdd(false);
+  }
+
+  async function updateClientInline(
+    id: string,
+    patch: Partial<Pick<ClientRow, "service" | "follow_up" | "active">>
+  ) {
+    const { data, error } = await supabase
+      .from("clients")
+      .update(patch)
+      .eq("id", id)
+      .select("*")
+      .single();
+
+    if (error) {
+      alert("Update failed: " + error.message);
+      return;
+    }
+
+    const updated = fromRow(data as ClientRow);
+    setClients((prev) => prev.map((c) => (c.id === id ? updated : c)));
+  }
+
+  async function handleDelete(id: string) {
+    // soft delete
+    const { error } = await supabase
+      .from("clients")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
+
+    if (error) {
+      alert("Delete failed: " + error.message);
+      return;
+    }
+
+    setClients((prev) => prev.filter((c) => c.id !== id));
+  }
+
+  function handleResetFilters() {
+    setSearch("");
+    setServiceFilter("all");
   }
 
   return (
@@ -368,7 +429,7 @@ export default function ClientsPage() {
                 <Select
                   value={serviceFilter}
                   onValueChange={(val) =>
-                    setServiceFilter(val === "all" ? "all" : val)
+                    setServiceFilter(val === "all" ? "all" : (val as ServiceType))
                   }
                 >
                   <SelectTrigger className="h-9 w-full rounded-lg text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100">
@@ -445,7 +506,19 @@ export default function ClientsPage() {
               </thead>
 
               <tbody className="text-[13px] text-foreground/90 dark:text-neutral-200">
-                {filteredClients.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td className="px-4 py-10 text-center text-sm text-muted-foreground" colSpan={9}>
+                      Loading…
+                    </td>
+                  </tr>
+                ) : errorMsg ? (
+                  <tr>
+                    <td className="px-4 py-10 text-center text-sm text-red-500" colSpan={9}>
+                      {errorMsg}
+                    </td>
+                  </tr>
+                ) : filteredClients.length === 0 ? (
                   <tr>
                     <td
                       className="px-4 py-10 text-center text-sm text-muted-foreground dark:text-neutral-500"
@@ -471,7 +544,7 @@ export default function ClientsPage() {
                         <div className="flex flex-col">
                           <span className="truncate">{c.name}</span>
                           <span className="text-[11px] font-normal text-muted-foreground dark:text-neutral-500">
-                            ID #{c.id.toString().padStart(3, "0")}
+                            ID #{c.id.slice(0, 8)}
                           </span>
                         </div>
                       </td>
@@ -505,7 +578,7 @@ export default function ClientsPage() {
                         <Select
                           value={c.service}
                           onValueChange={(val) =>
-                            updateClient(c.id, { service: val })
+                            updateClientInline(c.id, { service: val as ServiceType })
                           }
                         >
                           <SelectTrigger className="group-hover:bg-background h-8 w-[150px] rounded-md border-border bg-background/60 text-xs shadow-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:group-hover:bg-neutral-800">
@@ -536,7 +609,7 @@ export default function ClientsPage() {
                         <Select
                           value={c.followUp}
                           onValueChange={(val) =>
-                            updateClient(c.id, { followUp: val })
+                            updateClientInline(c.id, { follow_up: val as FollowUpType })
                           }
                         >
                           <SelectTrigger className="group-hover:bg-background h-8 w-[110px] rounded-md border-border bg-background/60 text-xs shadow-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:group-hover:bg-neutral-800">
@@ -584,15 +657,9 @@ export default function ClientsPage() {
                           <div className="flex select-none items-center gap-2 text-[11px] text-muted-foreground dark:text-neutral-400">
                             <Checkbox
                               checked={c.active}
-                              onCheckedChange={() => {
-                                setClients((prev) =>
-                                  prev.map((cl) =>
-                                    cl.id === c.id
-                                      ? { ...cl, active: !cl.active }
-                                      : cl
-                                  )
-                                );
-                              }}
+                              onCheckedChange={() =>
+                                updateClientInline(c.id, { active: !c.active })
+                              }
                               className="h-4 w-4 data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500 dark:data-[state=checked]:border-emerald-400 dark:data-[state=checked]:bg-emerald-400"
                             />
                             <span className="leading-none">Enable</span>
@@ -618,7 +685,7 @@ export default function ClientsPage() {
               </tbody>
             </table>
 
-            {/* PAGINATION */}
+            {/* PAGINATION (static UI placeholder) */}
             <div className="flex flex-col gap-3 border-t border-border/60 px-4 py-4 text-[12px] text-muted-foreground dark:border-neutral-700/60 dark:text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2 leading-none">
                 <span className="text-muted-foreground dark:text-neutral-500">
@@ -660,23 +727,23 @@ export default function ClientsPage() {
         title="Add Client"
         description="Create a new buyer / lead in CRM"
         footer={
-          <>
-            <DialogClose asChild>
-              <Button
-                variant="outline"
-                className="h-9 rounded-md border-border text-[13px] dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
-              >
-                Cancel
-              </Button>
-            </DialogClose>
+            <>
+              <DialogClose asChild>
+                <Button
+                  variant="outline"
+                  className="h-9 rounded-md border-border text-[13px] dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:bg-neutral-700"
+                >
+                  Cancel
+                </Button>
+              </DialogClose>
 
-            <Button
-              className="h-9 rounded-md text-[13px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:text-white dark:hover:bg-indigo-600"
-              onClick={handleSaveClient}
-            >
-              Save Client
-            </Button>
-          </>
+              <Button
+                className="h-9 rounded-md text-[13px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:text-white dark:hover:bg-indigo-600"
+                onClick={handleSaveClient}
+              >
+                Save Client
+              </Button>
+            </>
         }
       >
         {/* FORM FIELDS INSIDE DRAWER */}
@@ -740,7 +807,7 @@ export default function ClientsPage() {
             </Label>
             <Select
               value={formService}
-              onValueChange={(val) => setFormService(val)}
+              onValueChange={(val) => setFormService(val as ServiceType)}
             >
               <SelectTrigger className="h-9 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100">
                 <SelectValue />
@@ -766,7 +833,7 @@ export default function ClientsPage() {
             </Label>
             <Select
               value={formFollowUp}
-              onValueChange={(val) => setFormFollowUp(val)}
+              onValueChange={(val) => setFormFollowUp(val as FollowUpType)}
             >
               <SelectTrigger className="h-9 text-sm dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100">
                 <SelectValue />
