@@ -11,10 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { ModeToggle } from "@/components/ModeToggle";
 import { ArrowRight, ExternalLink, PencilLine, FilePlus2 } from "lucide-react";
 
-// ---------- DB Row Types (matching your schemas) ----------
+/** ========= DB Row Types (match your schemas) ========= */
 type PostStatus = "draft" | "published";
 
-type PostRow = {
+interface PostRow {
   id: string;
   title: string;
   slug: string;
@@ -23,17 +23,17 @@ type PostRow = {
   excerpt: string | null;
   content: string | null;
   author: string | null;
-  updated_at: string; // timestamptz
+  updated_at: string;
   seo_title: string | null;
   seo_description: string | null;
   seo_keywords: string | null;
-};
+}
 
 type ServiceType = "Property Sale" | "Property Purchase" | "Property Rent";
 type FollowUpType = "Daily" | "Weekly" | "Monthly";
 type LeadPriority = "Hot" | "Warm" | "Cold";
 
-type ClientRow = {
+interface ClientRow {
   id: string;
   name: string;
   email: string | null;
@@ -50,9 +50,9 @@ type ClientRow = {
   updated_by: string | null;
   created_by_name: string | null;
   updated_by_name: string | null;
-};
+}
 
-type LeadRow = {
+interface LeadRow {
   id: string;
   name: string;
   email: string | null;
@@ -69,36 +69,22 @@ type LeadRow = {
   updated_by: string | null;
   created_by_name: string | null;
   updated_by_name: string | null;
-};
+}
 
-// ---------- Small UI bits ----------
+/** ========= Small UI bits ========= */
 function PostStatusBadge({ status }: { status: PostStatus }) {
   const tone =
     status === "published"
       ? "bg-green-500/10 text-green-700 ring-green-500/20 dark:text-green-400"
       : "bg-amber-500/10 text-amber-700 ring-amber-500/20 dark:text-amber-400";
   return (
-    <Badge
-      variant="outline"
-      className={cn(
-        "h-6 gap-1 rounded-md px-2 text-[11px] font-medium ring-1",
-        tone
-      )}
-    >
+    <Badge variant="outline" className={cn("h-6 gap-1 rounded-md px-2 text-[11px] font-medium ring-1", tone)}>
       {status}
     </Badge>
   );
 }
 
-function StatCard({
-  label,
-  value,
-  helper,
-}: {
-  label: string;
-  value: number | string;
-  helper?: string;
-}) {
+function StatCard({ label, value, helper }: { label: string; value: number | string; helper?: string }) {
   return (
     <Card className="border-border/60 bg-background shadow-sm">
       <CardContent className="p-4">
@@ -110,14 +96,14 @@ function StatCard({
   );
 }
 
-function formatDateTime(input: string) {
+function formatDateTime(input: string): string {
   const d = new Date(input);
   if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
 }
 
-// ---------- Page ----------
-export default function AdminPage() {
+/** ========= Page ========= */
+export default function AdminPage(): React.JSX.Element {
   const supabase = React.useMemo(() => createSupabaseBrowser(), []);
 
   // counts
@@ -125,7 +111,7 @@ export default function AdminPage() {
   const [clientCount, setClientCount] = React.useState<number>(0);
   const [postCount, setPostCount] = React.useState<number>(0);
 
-  // recent items
+  // recent items (all used below)
   const [recentLeads, setRecentLeads] = React.useState<LeadRow[]>([]);
   const [recentClients, setRecentClients] = React.useState<ClientRow[]>([]);
   const [recentPosts, setRecentPosts] = React.useState<PostRow[]>([]);
@@ -134,7 +120,7 @@ export default function AdminPage() {
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    async function load() {
+    async function load(): Promise<void> {
       setLoading(true);
       setErrorMsg(null);
       try {
@@ -143,17 +129,15 @@ export default function AdminPage() {
           .from("leads")
           .select("*", { count: "exact", head: true })
           .is("deleted_at", null);
-
         if (leadsCntErr) throw leadsCntErr;
         setLeadCount(leadsCnt ?? 0);
 
-        // Clients count
+        // Clients count (active only)
         const { count: clientsCnt, error: clientsCntErr } = await supabase
           .from("clients")
           .select("*", { count: "exact", head: true })
           .is("deleted_at", null)
           .eq("active", true);
-
         if (clientsCntErr) throw clientsCntErr;
         setClientCount(clientsCnt ?? 0);
 
@@ -161,7 +145,6 @@ export default function AdminPage() {
         const { count: postsCnt, error: postsCntErr } = await supabase
           .from("blog_posts")
           .select("*", { count: "exact", head: true });
-
         if (postsCntErr) throw postsCntErr;
         setPostCount(postsCnt ?? 0);
 
@@ -173,7 +156,6 @@ export default function AdminPage() {
           .order("updated_at", { ascending: false })
           .limit(5)
           .returns<LeadRow[]>();
-
         if (leadsErr) throw leadsErr;
         setRecentLeads(leadsData ?? []);
 
@@ -185,7 +167,6 @@ export default function AdminPage() {
           .order("updated_at", { ascending: false })
           .limit(5)
           .returns<ClientRow[]>();
-
         if (clientsErr) throw clientsErr;
         setRecentClients(clientsData ?? []);
 
@@ -196,7 +177,6 @@ export default function AdminPage() {
           .order("updated_at", { ascending: false })
           .limit(5)
           .returns<PostRow[]>();
-
         if (postsErr) throw postsErr;
         setRecentPosts(postsData ?? []);
       } catch (e: unknown) {
@@ -215,7 +195,6 @@ export default function AdminPage() {
       {/* Navbar */}
       <header className="sticky top-0 z-20 bg-white/70 backdrop-blur border-b border-slate-200 px-4 md:px-8 dark:bg-neutral-900/70 dark:border-neutral-800">
         <nav className="flex h-16 items-center justify-between max-w-7xl mx-auto">
-          {/* Brand */}
           <Link href="/admin" className="flex items-baseline gap-1 font-semibold">
             <span className="text-xl tracking-tight">Vista World</span>
             <span className="text-xl text-indigo-600">Admin</span>
@@ -223,19 +202,13 @@ export default function AdminPage() {
 
           <ul className="hidden md:flex items-center gap-6 text-sm text-slate-600 font-medium dark:text-neutral-400">
             <li>
-              <Link href="/admin/leads" className="hover:text-slate-900 dark:hover:text-neutral-100">
-                Leads
-              </Link>
+              <Link href="/admin/leads" className="hover:text-slate-900 dark:hover:text-neutral-100">Leads</Link>
             </li>
             <li>
-              <Link href="/admin/clients" className="hover:text-slate-900 dark:hover:text-neutral-100">
-                Clients
-              </Link>
+              <Link href="/admin/clients" className="hover:text-slate-900 dark:hover:text-neutral-100">Clients</Link>
             </li>
             <li>
-              <Link href="/admin/posts" className="hover:text-slate-900 dark:hover:text-neutral-100">
-                Posts
-              </Link>
+              <Link href="/admin/posts" className="hover:text-slate-900 dark:hover:text-neutral-100">Posts</Link>
             </li>
           </ul>
 
@@ -250,7 +223,7 @@ export default function AdminPage() {
         </nav>
       </header>
 
-      {/* Hero / Summary */}
+      {/* Summary */}
       <section className="relative w-full flex-1">
         <div className="relative max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-10">
           <motion.div
@@ -266,14 +239,10 @@ export default function AdminPage() {
               </div>
               <div className="flex gap-2">
                 <Link href="/admin/leads">
-                  <Button className="gap-2">
-                    Manage Leads <ArrowRight className="h-4 w-4" />
-                  </Button>
+                  <Button className="gap-2">Manage Leads <ArrowRight className="h-4 w-4" /></Button>
                 </Link>
                 <Link href="/admin/posts/new">
-                  <Button variant="outline" className="gap-2">
-                    New Post <FilePlus2 className="h-4 w-4" />
-                  </Button>
+                  <Button variant="outline" className="gap-2">New Post <FilePlus2 className="h-4 w-4" /></Button>
                 </Link>
               </div>
             </div>
@@ -329,9 +298,7 @@ export default function AdminPage() {
                                   <div className="text-[12px] text-muted-foreground line-clamp-1">{p.excerpt}</div>
                                 ) : null}
                               </td>
-                              <td className="py-3 px-2">
-                                <PostStatusBadge status={p.status} />
-                              </td>
+                              <td className="py-3 px-2"><PostStatusBadge status={p.status} /></td>
                               <td className="py-3 px-2">{p.author ?? "—"}</td>
                               <td className="py-3 px-2">{formatDateTime(p.updated_at)}</td>
                               <td className="py-3 px-2">
@@ -452,18 +419,10 @@ export default function AdminPage() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <span className="text-slate-900 font-semibold text-sm dark:text-neutral-100">
-              Quick links
-            </span>
-            <Link className="text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-100" href="/admin/leads">
-              Leads
-            </Link>
-            <Link className="text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-100" href="/admin/clients">
-              Clients
-            </Link>
-            <Link className="text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-100" href="/admin/posts">
-              Posts
-            </Link>
+            <span className="text-slate-900 font-semibold text-sm dark:text-neutral-100">Quick links</span>
+            <Link className="text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-100" href="/admin/leads">Leads</Link>
+            <Link className="text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-100" href="/admin/clients">Clients</Link>
+            <Link className="text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-neutral-100" href="/admin/posts">Posts</Link>
           </div>
         </div>
       </footer>
