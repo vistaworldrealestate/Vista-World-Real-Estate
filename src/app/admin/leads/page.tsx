@@ -291,7 +291,7 @@ export default function LeadsPage() {
   }
 
   React.useEffect(() => {
-    fetchLeads();
+    void fetchLeads();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -328,10 +328,10 @@ export default function LeadsPage() {
           { onConflict: "phone,created_by", ignoreDuplicates: false }
         )
         .select("id")
-        .single();
+        .single<{ id: string }>();
 
       if (upsertErr) {
-        alert("Failed to convert: " + upsertErr.message);
+        window.alert("Failed to convert: " + upsertErr.message);
         return;
       }
 
@@ -341,18 +341,19 @@ export default function LeadsPage() {
         .eq("id", lead.id);
 
       if (archiveErr) {
-        alert(
+        window.alert(
           "Client created, but failed to move lead to Trash: " +
             archiveErr.message
         );
       }
 
       setLeads((prev) => prev.filter((l) => l.id !== lead.id));
-      alert(
+      window.alert(
         "Converted to client ✅" + (created?.id ? ` (id: ${created.id})` : "")
       );
-    } catch (e: any) {
-      alert("Unexpected error: " + (e?.message || String(e)));
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      window.alert("Unexpected error: " + msg);
     }
   }
 
@@ -386,7 +387,7 @@ export default function LeadsPage() {
       .update({ deleted_at: new Date().toISOString() })
       .eq("id", id);
     if (error) {
-      alert("Failed moving to trash: " + error.message);
+      window.alert("Failed moving to trash: " + error.message);
       return;
     }
     setLeads((prev) => prev.filter((l) => l.id !== id));
@@ -398,7 +399,7 @@ export default function LeadsPage() {
       .update({ deleted_at: null })
       .eq("id", id);
     if (error) {
-      alert("Failed to restore: " + error.message);
+      window.alert("Failed to restore: " + error.message);
       return;
     }
     setTrashedLeads((prev) => prev.filter((l) => l.id !== id));
@@ -406,10 +407,10 @@ export default function LeadsPage() {
   }
 
   async function deletePermanently(id: string) {
-    if (!confirm("Delete permanently? This cannot be undone.")) return;
+    if (!window.confirm("Delete permanently? This cannot be undone.")) return;
     const { error } = await supabase.from("leads").delete().eq("id", id);
     if (error) {
-      alert("Failed to delete permanently: " + error.message);
+      window.alert("Failed to delete permanently: " + error.message);
       return;
     }
     setTrashedLeads((prev) => prev.filter((l) => l.id !== id));
@@ -417,7 +418,7 @@ export default function LeadsPage() {
 
   async function handleSaveLead() {
     if (!formName.trim() || !formPhone.trim()) {
-      alert("Name and phone are required");
+      window.alert("Name and phone are required");
       return;
     }
 
@@ -437,12 +438,12 @@ export default function LeadsPage() {
         .from("leads")
         .insert(base)
         .select("*")
-        .single();
+        .single<LeadRow>();
       if (error) {
-        alert("Failed saving lead: " + error.message);
+        window.alert("Failed saving lead: " + error.message);
         return;
       }
-      const r = data as LeadRow;
+      const r = data;
       setLeads((prev) => [fromLeadRow(r), ...prev]);
     } else {
       const { data, error } = await supabase
@@ -452,13 +453,13 @@ export default function LeadsPage() {
         })
         .eq("id", editingId)
         .select("*")
-        .single();
+        .single<LeadRow>();
 
       if (error) {
-        alert("Failed updating lead: " + error.message);
+        window.alert("Failed updating lead: " + error.message);
         return;
       }
-      const updated = fromLeadRow(data as LeadRow);
+      const updated = fromLeadRow(data);
       setLeads((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
     }
 
@@ -477,7 +478,7 @@ export default function LeadsPage() {
       "last_contacted",
       "project",
       "notes",
-    ];
+    ] as const;
     const rows = filteredLeads.map((l) => [
       l.id,
       l.name,
@@ -508,9 +509,8 @@ export default function LeadsPage() {
   }
 
   function escapeCsv(val: string) {
-    if (val == null) return "";
     const needsQuotes = /[",\n]/.test(val);
-    const out = String(val).replace(/"/g, '""');
+    const out = val.replace(/"/g, '""');
     return needsQuotes ? `"${out}"` : out;
   }
 
@@ -518,7 +518,7 @@ export default function LeadsPage() {
     const text = await file.text();
     const lines = text.split(/\r?\n/).filter(Boolean);
     if (lines.length === 0) {
-      alert("Empty CSV");
+      window.alert("Empty CSV");
       return;
     }
 
@@ -536,7 +536,7 @@ export default function LeadsPage() {
     };
 
     if (idx.name === -1 || idx.phone === -1) {
-      alert('CSV must include at least "name" and "phone" columns.');
+      window.alert('CSV must include at least "name" and "phone" columns.');
       return;
     }
 
@@ -584,7 +584,7 @@ export default function LeadsPage() {
     }
 
     if (toInsert.length === 0) {
-      alert("No valid rows found in CSV.");
+      window.alert("No valid rows found in CSV.");
       return;
     }
 
@@ -593,13 +593,13 @@ export default function LeadsPage() {
       .insert(toInsert)
       .select("*");
     if (error) {
-      alert("Import failed: " + error.message);
+      window.alert("Import failed: " + error.message);
       return;
     }
 
     const added = ((data as LeadRow[]) ?? []).map(fromLeadRow);
     setLeads((prev) => [...added, ...prev]);
-    alert(`Imported ${added.length} lead(s).`);
+    window.alert(`Imported ${added.length} lead(s).`);
   }
 
   function splitCsvLine(line: string, expectedCols: number): string[] {
@@ -608,7 +608,7 @@ export default function LeadsPage() {
     let inQuotes = false;
 
     for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
+      const ch = line[i] as string;
       if (inQuotes) {
         if (ch === '"') {
           if (line[i + 1] === '"') {
@@ -733,7 +733,7 @@ export default function LeadsPage() {
                 type="file"
                 accept=".csv,text/csv"
                 className="hidden"
-                onChange={async (e) => {
+                onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
                   const f = e.target.files?.[0];
                   if (!f) return;
                   await handleImportCsv(f);
@@ -780,7 +780,7 @@ export default function LeadsPage() {
         <Card className="border-border/60 bg-background shadow-sm">
           <CardContent className="flex flex-col gap-4 p-4">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div className="flex w-full flex-col gap-3 lg:max-w-[480px]">
+              <div className="flex w/full flex-col gap-3 lg:max-w-[480px]">
                 <div className="relative w-full">
                   <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                     <Search className="h-4 w-4" />
@@ -962,7 +962,7 @@ export default function LeadsPage() {
                             size="sm"
                             variant="outline"
                             className="h-8 whitespace-nowrap rounded-md border-border bg-background/50 px-2 text-[12px] font-medium shadow-sm hover:bg-background"
-                            onClick={() => convertToClient(lead)}
+                            onClick={() => void convertToClient(lead)}
                             aria-label={`Convert ${lead.name} to client`}
                           >
                             Convert → Client
@@ -983,7 +983,7 @@ export default function LeadsPage() {
                             size="sm"
                             variant="outline"
                             className="h-8 whitespace-nowrap gap-1 rounded-md border-red-300/60 bg-red-500/5 px-2 text-[12px] font-medium text-red-600 shadow-sm hover:bg-red-500/10"
-                            onClick={() => moveToTrash(lead.id)}
+                            onClick={() => void moveToTrash(lead.id)}
                             aria-label={`Move ${lead.name} to trash`}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -1011,6 +1011,7 @@ export default function LeadsPage() {
                   size="sm"
                   variant="outline"
                   className="h-8 rounded-md border-border bg-background/50 px-3 text-[12px] shadow-sm hover:bg-background"
+                  disabled
                 >
                   Prev
                 </Button>
@@ -1018,6 +1019,7 @@ export default function LeadsPage() {
                   size="sm"
                   variant="outline"
                   className="h-8 rounded-md border-border bg-background/50 px-3 text-[12px] shadow-sm hover:bg-background"
+                  disabled
                 >
                   Next
                 </Button>
@@ -1045,7 +1047,7 @@ export default function LeadsPage() {
 
             <Button
               className="h-9 rounded-md bg-indigo-600 text-[13px] font-medium text-white hover:bg-indigo-700"
-              onClick={handleSaveLead}
+              onClick={() => void handleSaveLead()}
             >
               {editingId ? "Save Changes" : "Save Lead"}
             </Button>
@@ -1193,7 +1195,7 @@ export default function LeadsPage() {
                     size="sm"
                     variant="outline"
                     className="h-7 px-2"
-                    onClick={() => restoreFromTrash(t.id)}
+                    onClick={() => void restoreFromTrash(t.id)}
                   >
                     <RotateCcw className="mr-1 h-3.5 w-3.5" /> Restore
                   </Button>
@@ -1201,7 +1203,7 @@ export default function LeadsPage() {
                     size="sm"
                     variant="outline"
                     className="h-7 px-2 border-red-300/60 bg-red-500/5 text-red-600 hover:bg-red-500/10"
-                    onClick={() => deletePermanently(t.id)}
+                    onClick={() => void deletePermanently(t.id)}
                   >
                     <AlertTriangle className="mr-1 h-3.5 w-3.5" />
                     Delete
