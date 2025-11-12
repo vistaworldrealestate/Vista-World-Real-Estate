@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-import { ThemeProvider } from "@/components/theme-provider"; // ⬅️ add this
+import { ThemeProvider } from "@/components/theme-provider";
+import Navbar from "@/components/vistaworld/Navbar";   // ✅ import navbar
+import Footer from "@/components/vistaworld/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,13 +32,20 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider
-          attribute="class"        // puts "class" on <html> for dark mode
-          defaultTheme="system"    // follow user's OS by default
-          enableSystem             // allow auto-switching
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
           disableTransitionOnChange
         >
+
+          {/* ✅ Navbar is now global */}
+          <Navbar />
+
           {children}
+
+          <Footer/>
         </ThemeProvider>
+
       </body>
     </html>
   );
