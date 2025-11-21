@@ -3,8 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
-import Navbar from "@/components/vistaworld/Navbar";   // ✅ import navbar
-import Footer from "@/components/vistaworld/Footer";
+import AppShell from "./AppShell";  // ✅ yeh naya wrapper
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,15 +36,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-
-          {/* ✅ Navbar is now global */}
-          <Navbar />
-
-          {children}
-
-          <Footer/>
+          {/* ✅ AppShell global navbar/footer handle karega */}
+          <AppShell>{children}</AppShell>
         </ThemeProvider>
-
       </body>
     </html>
   );
