@@ -13,7 +13,7 @@ import { createSupabaseBrowser } from "@/lib/supabaseClient";
 
 /* ---------------- Types from your DB ---------------- */
 type ServiceType = "Property Sale" | "Property Purchase" | "Property Rent";
-type FollowUpType = "Daily" | "Weekly" | "Monthly";
+type FollowUpType = "Daily" | "Weekly" | "15 days" | "30 days" | "On Demand";
 type LeadPriority = "Hot" | "Warm" | "Cold";
 
 type ClientRow = {

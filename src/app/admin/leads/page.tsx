@@ -41,7 +41,7 @@ type LeadPriority = "Hot" | "Warm" | "Cold";
 
 // Match your Postgres enums (adjust if you have more values)
 type ServiceType = "Property Sale" | "Property Purchase" | "Property Rent";
-type FollowUpType = "Daily" | "Weekly" | "Monthly";
+type FollowUpType = "Daily" | "Weekly" | "15 days" | "30 days" | "On Demand";
 
 type LeadRow = {
   id: string;
@@ -301,31 +301,25 @@ export default function LeadsPage() {
     setPriorityFilter("all");
   }
 
-  // Convert → Client (carries project; notes stay on lead)
-  async function convertToClient(lead: Lead) {
+  // Convert → Follow Up (carries project; notes stay on lead)
+  async function convertToFollowUp(lead: Lead) {
     try {
       const email = lead.email === "-" ? null : lead.email?.trim() || null;
 
-      const followUpByPriority: Record<LeadPriority, FollowUpType> = {
-        Hot: "Daily",
-        Warm: "Weekly",
-        Cold: "Monthly",
-      };
-
       const { data: created, error: upsertErr } = await supabase
-        .from("clients")
+        .from("follow_ups")
         .upsert(
           {
             name: lead.name,
             email,
             phone: lead.phone,
+            source: lead.source,
+            priority: lead.priority,
             project: lead.project || null,
-            service: "Property Sale" as ServiceType,
-            follow_up: followUpByPriority[lead.priority] as FollowUpType,
-            joined: todayISODate(),
-            active: true,
+            notes: lead.notes || null,
+            created_by: lead.createdBy || null,
           },
-          { onConflict: "phone,created_by", ignoreDuplicates: false }
+          { onConflict: "id", ignoreDuplicates: false }
         )
         .select("id")
         .single<{ id: string }>();
@@ -342,14 +336,14 @@ export default function LeadsPage() {
 
       if (archiveErr) {
         window.alert(
-          "Client created, but failed to move lead to Trash: " +
-            archiveErr.message
+          "Follow up created, but failed to move lead to Trash: " +
+          archiveErr.message
         );
       }
 
       setLeads((prev) => prev.filter((l) => l.id !== lead.id));
       window.alert(
-        "Converted to client ✅" + (created?.id ? ` (id: ${created.id})` : "")
+        "Converted to follow up ✅" + (created?.id ? ` (id: ${created.id})` : "")
       );
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -651,21 +645,21 @@ export default function LeadsPage() {
         q.length === 0
           ? true
           : [
-              lead.name,
-              lead.email,
-              lead.phone,
-              lead.source,
-              lead.priority,
-              lead.lastContacted,
-              lead.project,
-              lead.notes,
-              lead.createdBy ?? "",
-              lead.editedBy ?? "",
-              lead.editedAt ?? "",
-            ]
-              .join(" ")
-              .toLowerCase()
-              .includes(q);
+            lead.name,
+            lead.email,
+            lead.phone,
+            lead.source,
+            lead.priority,
+            lead.lastContacted,
+            lead.project,
+            lead.notes,
+            lead.createdBy ?? "",
+            lead.editedBy ?? "",
+            lead.editedAt ?? "",
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(q);
       const matchesPriority =
         priorityFilter === "all" ? true : lead.priority === priorityFilter;
       return matchesSearch && matchesPriority;
@@ -962,10 +956,10 @@ export default function LeadsPage() {
                             size="sm"
                             variant="outline"
                             className="h-8 whitespace-nowrap rounded-md border-border bg-background/50 px-2 text-[12px] font-medium shadow-sm hover:bg-background"
-                            onClick={() => void convertToClient(lead)}
-                            aria-label={`Convert ${lead.name} to client`}
+                            onClick={() => void convertToFollowUp(lead)}
+                            aria-label={`Convert ${lead.name} to follow up`}
                           >
-                            Convert → Client
+                            Convert → Follow Up
                           </Button>
 
                           <Button

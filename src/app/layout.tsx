@@ -4,6 +4,7 @@ import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import AppShell from "./AppShell";  // ✅ yeh naya wrapper
+import GetInTouchSidebar from "@/components/shared/get-in-touch-sidebar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,7 +38,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {/* ✅ AppShell global navbar/footer handle karega */}
-          <AppShell>{children}</AppShell>
+          <AppShell>{children}
+
+            <GetInTouchSidebar/>
+          </AppShell>
         </ThemeProvider>
       </body>
     </html>

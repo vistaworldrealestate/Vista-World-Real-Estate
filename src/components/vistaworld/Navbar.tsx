@@ -18,9 +18,13 @@ export default function Navbar() {
   };
 
   const links = [
-    { href: "/projects", label: "Projects" },
+    { href: "/", label: "Home" },
+    { href: "/about", label: "About" },
+    { href: "/services", label: "Services" },
+    { href: "/advisory", label: "Advisory" },
+    { href: "/joint-ventures", label: "Joint Ventures" },
     { href: "/properties", label: "Properties" },
-    { href: "/agents", label: "Agents" },
+    // { href: "/agents", label: "Agents" },
     { href: "/contact", label: "Contact" },
   ];
 

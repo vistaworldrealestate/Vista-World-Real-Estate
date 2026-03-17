@@ -33,6 +33,18 @@ const nav = [
     color: "from-pink-500 to-rose-500",
   },
   {
+    href: "/admin/follow-ups",
+    label: "Follow ups",
+    icon: Contact2, // Or another icon like CalendarArrowUp / PhoneCall
+    color: "from-orange-400 to-amber-500",
+  },
+  {
+    href: "/admin/proposals",
+    label: "Proposals",
+    icon: Newspaper, // Or FileText
+    color: "from-fuchsia-500 to-pink-500",
+  },
+  {
     href: "/admin/blogs",
     label: "Blogs",
     icon: Newspaper,

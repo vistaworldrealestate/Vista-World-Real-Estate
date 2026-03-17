@@ -3,552 +3,550 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
-import { MapPin, BedDouble, Bath, Expand, ArrowRight, SlidersHorizontal, Search, Filter, ChevronLeft, ChevronRight, Star, Sparkles } from "lucide-react";
+import {
+  MapPin,
+  BedDouble,
+  Bath,
+  Ruler,
+  IndianRupee,
+  ArrowRight,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
 
-/**
- * PROPERTIES PAGE (app/properties/page.tsx)
- * - Modern, aesthetic, dark‑mode ready
- * - Uses shadcn/ui primitives
- * - Responsive filters (sidebar on desktop, Sheet on mobile)
- * - Demo data & client-side filtering/sorting/pagination
- */
-
-export type Property = {
-  id: string | number;
+type Property = {
+  id: string;
   title: string;
   location: string;
-  price: number; // stored as number of lakhs (e.g. 135 => ₹1.35Cr is 135 lakhs)
-  priceLabel: string; // formatted label, e.g. "₹1.35Cr"
-  beds: number;
-  baths: number;
-  area: string;
-  imageUrl: string;
-  badge?: "New" | "Hot" | "Featured";
-  city: "mumbai" | "pune" | "bangalore" | "delhi" | "navi";
+  priceLabel: string; // e.g. "₹ 1.25 Cr"
+  priceValue: number; // for sorting (in lakhs, crores — pick a consistent unit)
+  type: "Apartment" | "Villa" | "Plot" | "Commercial";
+  status: "For Sale" | "For Rent";
+  beds?: number;
+  baths?: number;
+  areaSqft?: number;
+  image: string;
+  featured?: boolean;
 };
 
-const ALL_PROPERTIES: ReadonlyArray<Property> = [
+const DEMO_PROPERTIES: Property[] = [
   {
-    id: 1,
-    title: "Skyline Vista Apartments",
-    location: "Powai, Mumbai",
-    city: "mumbai",
-    price: 135,
-    priceLabel: "₹1.35Cr",
+    id: "p1",
+    title: "Luxury 3BHK Apartment with Skyline View",
+    location: "Sector 74, Noida",
+    priceLabel: "₹ 1.25 Cr",
+    priceValue: 125,
+    type: "Apartment",
+    status: "For Sale",
     beds: 3,
     baths: 2,
-    area: "1,240 sq ft",
-    badge: "Featured",
-    imageUrl: "https://images.unsplash.com/photo-1501183638710-841dd1904471?q=80&w=1600&auto=format&fit=crop",
+    areaSqft: 1650,
+    featured: true,
+    image:
+      "https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2000&auto=format&fit=crop",
   },
   {
-    id: 2,
-    title: "Palm Grove Villas",
-    location: "Whitefield, Bangalore",
-    city: "bangalore",
-    price: 210,
-    priceLabel: "₹2.10Cr",
-    beds: 4,
-    baths: 4,
-    area: "2,350 sq ft",
-    badge: "Hot",
-    imageUrl: "https://images.unsplash.com/photo-1505691723518-36a5ac3b2d52?q=80&w=1600&auto=format&fit=crop",
-  },
-  {
-    id: 3,
-    title: "Harborfront Residences",
-    location: "Vashi, Navi Mumbai",
-    city: "navi",
-    price: 95,
-    priceLabel: "₹95L",
+    id: "p2",
+    title: "Modern 2BHK Near Metro",
+    location: "Dwarka Sec 14, Delhi",
+    priceLabel: "₹ 38,000 /mo",
+    priceValue: 38,
+    type: "Apartment",
+    status: "For Rent",
     beds: 2,
     baths: 2,
-    area: "980 sq ft",
-    badge: "New",
-    imageUrl: "https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=1600&auto=format&fit=crop",
+    areaSqft: 1180,
+    image:
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=2000&auto=format&fit=crop",
   },
   {
-    id: 4,
-    title: "Coconut Grove Homes",
-    location: "Baner, Pune",
-    city: "pune",
-    price: 120,
-    priceLabel: "₹1.20Cr",
-    beds: 3,
-    baths: 3,
-    area: "1,540 sq ft",
-    imageUrl: "https://images.unsplash.com/photo-1502005097973-6a7082348e28?q=80&w=1600&auto=format&fit=crop",
-  },
-  {
-    id: 5,
-    title: "Aravalli Heights",
-    location: "Dwarka, Delhi",
-    city: "delhi",
-    price: 178,
-    priceLabel: "₹1.78Cr",
-    beds: 3,
-    baths: 3,
-    area: "1,860 sq ft",
-    imageUrl: "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?q=80&w=1600&auto=format&fit=crop",
-  },
-  {
-    id: 6,
-    title: "Seawind Towers",
-    location: "Bandra, Mumbai",
-    city: "mumbai",
-    price: 260,
-    priceLabel: "₹2.60Cr",
+    id: "p3",
+    title: "Premium Villa with Private Lawn",
+    location: "Rohini, Delhi",
+    priceLabel: "₹ 3.10 Cr",
+    priceValue: 310,
+    type: "Villa",
+    status: "For Sale",
     beds: 4,
     baths: 4,
-    area: "2,480 sq ft",
-    imageUrl: "https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?q=80&w=1600&auto=format&fit=crop",
+    areaSqft: 3200,
+    featured: true,
+    image:
+      "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=2000&auto=format&fit=crop",
   },
   {
-    id: 7,
-    title: "Tech Park Residences",
-    location: "Koramangala, Bangalore",
-    city: "bangalore",
-    price: 88,
-    priceLabel: "₹88L",
-    beds: 2,
-    baths: 2,
-    area: "920 sq ft",
-    imageUrl: "https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=1600&auto=format&fit=crop",
+    id: "p4",
+    title: "Corner Plot – Gated Community",
+    location: "Greater Noida West",
+    priceLabel: "₹ 92 Lakh",
+    priceValue: 92,
+    type: "Plot",
+    status: "For Sale",
+    areaSqft: 1800,
+    image:
+      "https://images.unsplash.com/photo-1501183638710-841dd1904471?q=80&w=2000&auto=format&fit=crop",
   },
   {
-    id: 8,
-    title: "Riverside Enclave",
-    location: "Kharghar, Navi Mumbai",
-    city: "navi",
-    price: 110,
-    priceLabel: "₹1.10Cr",
+    id: "p5",
+    title: "Commercial Office Space – Prime Location",
+    location: "Cyber Hub, Gurgaon",
+    priceLabel: "₹ 2.4 Lakh /mo",
+    priceValue: 240,
+    type: "Commercial",
+    status: "For Rent",
+    areaSqft: 2400,
+    image:
+      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2000&auto=format&fit=crop",
+  },
+  {
+    id: "p6",
+    title: "3BHK Family Apartment – Park Facing",
+    location: "Indirapuram, Ghaziabad",
+    priceLabel: "₹ 98 Lakh",
+    priceValue: 98,
+    type: "Apartment",
+    status: "For Sale",
     beds: 3,
     baths: 2,
-    area: "1,320 sq ft",
-    imageUrl: "https://images.unsplash.com/photo-1502673530728-f79b4cab31b1?q=80&w=1600&auto=format&fit=crop",
+    areaSqft: 1520,
+    image:
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2000&auto=format&fit=crop",
   },
 ];
 
-/* -------------------------------- PAGE -------------------------------- */
+type Filters = {
+  query: string;
+  status: "All" | Property["status"];
+  type: "All" | Property["type"];
+  minPrice: string; // number as string for input
+  maxPrice: string;
+  beds: "Any" | "1" | "2" | "3" | "4+";
+  sort: "Newest" | "Price: Low to High" | "Price: High to Low";
+};
 
 export default function PropertiesPage() {
-  // UI state
-  const [query, setQuery] = React.useState("");
-  const [city, setCity] = React.useState<string>("all");
-  const [beds, setBeds] = React.useState<string>("any");
-  const [baths, setBaths] = React.useState<string>("any");
-  const [price, setPrice] = React.useState<[number, number]>([50, 300]); // lakhs
-  const [sort, setSort] = React.useState<"reco" | "price-asc" | "price-desc" | "newest">("reco");
-  const [onlyFeatured, setOnlyFeatured] = React.useState(false);
+  const [filters, setFilters] = React.useState<Filters>({
+    query: "",
+    status: "All",
+    type: "All",
+    minPrice: "",
+    maxPrice: "",
+    beds: "Any",
+    sort: "Newest",
+  });
+
   const [page, setPage] = React.useState(1);
+  const pageSize = 6;
 
-  const PAGE_SIZE = 6;
-
-  // Derived
   const filtered = React.useMemo(() => {
-    return ALL_PROPERTIES.filter((p) => {
-      if (city !== "all" && p.city !== city) return false;
-      if (onlyFeatured && p.badge !== "Featured") return false;
-      if (beds !== "any" && p.beds < Number(beds)) return false;
-      if (baths !== "any" && p.baths < Number(baths)) return false;
-      if (p.price < price[0] || p.price > price[1]) return false;
-      if (query.trim().length) {
-        const q = query.toLowerCase();
-        if (!(`${p.title} ${p.location}`.toLowerCase().includes(q))) return false;
-      }
-      return true;
-    }).sort((a, b) => {
-      switch (sort) {
-        case "price-asc":
-          return a.price - b.price;
-        case "price-desc":
-          return b.price - a.price;
-        case "newest":
-          // demo: pretend higher id is newer
-          return Number(b.id) - Number(a.id);
-        default:
-          return 0; // reco = original order
-      }
-    });
-  }, [city, onlyFeatured, beds, baths, price, query, sort]);
+    let list = [...DEMO_PROPERTIES];
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    // search
+    if (filters.query.trim()) {
+      const q = filters.query.toLowerCase();
+      list = list.filter(
+        (p) =>
+          p.title.toLowerCase().includes(q) ||
+          p.location.toLowerCase().includes(q) ||
+          p.type.toLowerCase().includes(q)
+      );
+    }
+
+    // status
+    if (filters.status !== "All") {
+      list = list.filter((p) => p.status === filters.status);
+    }
+
+    // type
+    if (filters.type !== "All") {
+      list = list.filter((p) => p.type === filters.type);
+    }
+
+    // beds
+    if (filters.beds !== "Any") {
+      list = list.filter((p) => {
+        if (!p.beds) return false;
+        if (filters.beds === "4+") return p.beds >= 4;
+        return p.beds === Number(filters.beds);
+      });
+    }
+
+    // price range (priceValue uses your chosen unit; demo assumes "lakh-ish numbers" mix)
+    const min = filters.minPrice ? Number(filters.minPrice) : null;
+    const max = filters.maxPrice ? Number(filters.maxPrice) : null;
+
+    if (min !== null && !Number.isNaN(min)) list = list.filter((p) => p.priceValue >= min);
+    if (max !== null && !Number.isNaN(max)) list = list.filter((p) => p.priceValue <= max);
+
+    // sort
+    if (filters.sort === "Price: Low to High") {
+      list.sort((a, b) => a.priceValue - b.priceValue);
+    } else if (filters.sort === "Price: High to Low") {
+      list.sort((a, b) => b.priceValue - a.priceValue);
+    } else {
+      // Newest (demo: keep order)
+      list = list;
+    }
+
+    return list;
+  }, [filters]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   React.useEffect(() => {
-    // Reset to page 1 whenever filters change
     setPage(1);
-  }, [city, onlyFeatured, beds, baths, price, query, sort]);
+  }, [filters.query, filters.status, filters.type, filters.minPrice, filters.maxPrice, filters.beds, filters.sort]);
+
+  const resetFilters = () =>
+    setFilters({
+      query: "",
+      status: "All",
+      type: "All",
+      minPrice: "",
+      maxPrice: "",
+      beds: "Any",
+      sort: "Newest",
+    });
 
   return (
-    <div className="min-h-[100dvh] bg-background">
-      {/* Hero */}
-      <section className="relative isolate overflow-hidden">
-        <div className="absolute inset-0 -z-10">
-          <Image
-            src="https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&q=80&w=1920"
-            alt="City skyline"
-            fill
-            priority
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 dark:from-black/70 dark:via-black/60 dark:to-black/80" />
-        </div>
+    <main className="min-h-screen">
+      <Hero
+        query={filters.query}
+        setQuery={(v) => setFilters((p) => ({ ...p, query: v }))}
+      />
 
-        <div className="container mx-auto px-4 py-16 md:py-24">
-          <div className="flex flex-col items-start gap-6 md:flex-row md:items-end md:justify-between">
-            <div className="max-w-2xl text-white">
-              <Badge className="mb-3 bg-white/10 text-white backdrop-blur">VistaWorld</Badge>
-              <h1 className="text-4xl font-bold md:text-5xl">Find Properties That Fit You</h1>
-              <p className="mt-2 text-white/80">Smart filters, verified listings, and a sleek browsing experience.</p>
-              <div className="mt-4 flex items-center gap-3 text-white/80">
-                <span className="inline-flex items-center gap-2"><Star className="h-4 w-4" /> Trusted agents</span>
-                <span className="inline-flex items-center gap-2"><Sparkles className="h-4 w-4" /> Handpicked homes</span>
+      <section className="py-10 sm:py-14">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          {/* Filters Bar */}
+          <Card className="rounded-3xl">
+            <CardContent className="p-5 sm:p-7">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <SlidersHorizontal className="h-4 w-4" />
+                  Filters
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <Select
+                    value={filters.sort}
+                    onValueChange={(v: Filters["sort"]) =>
+                      setFilters((p) => ({ ...p, sort: v }))
+                    }
+                  >
+                    <SelectTrigger className="w-full sm:w-[210px]">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Newest">Newest</SelectItem>
+                      <SelectItem value="Price: Low to High">
+                        Price: Low to High
+                      </SelectItem>
+                      <SelectItem value="Price: High to Low">
+                        Price: High to Low
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={resetFilters}
+                    className="rounded-full"
+                  >
+                    Reset <X className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
 
-            {/* Search bar */}
-            <div className="w-full max-w-lg">
-              <div className="flex items-center gap-2 rounded-2xl bg-white/90 p-2 shadow-xl backdrop-blur dark:bg-neutral-900/90">
-                <Search className="ml-2 h-5 w-5 text-neutral-500" />
-                <Input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search by title, locality, landmark..."
-                  className="border-0 bg-transparent shadow-none focus-visible:ring-0"
-                />
-                <Button className="rounded-xl">Search</Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12">
+                {/* Status */}
+                <div className="lg:col-span-3">
+                  <Label className="text-xs text-muted-foreground">Status</Label>
+                  <Select
+                    value={filters.status}
+                    onValueChange={(v: Filters["status"]) =>
+                      setFilters((p) => ({ ...p, status: v }))
+                    }
+                  >
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="All" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All</SelectItem>
+                      <SelectItem value="For Sale">For Sale</SelectItem>
+                      <SelectItem value="For Rent">For Rent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-      {/* Content */}
-      <section className="container mx-auto grid grid-cols-1 gap-6 px-4 py-10 lg:grid-cols-[280px_1fr]">
-        {/* Filters Sidebar (desktop) */}
-        <aside className="hidden self-start rounded-2xl border bg-card p-4 lg:block">
-          <Filters
-            city={city}
-            setCity={setCity}
-            beds={beds}
-            setBeds={setBeds}
-            baths={baths}
-            setBaths={setBaths}
-            price={price}
-            setPrice={setPrice}
-            onlyFeatured={onlyFeatured}
-            setOnlyFeatured={setOnlyFeatured}
-          />
-        </aside>
+                {/* Type */}
+                <div className="lg:col-span-3">
+                  <Label className="text-xs text-muted-foreground">Type</Label>
+                  <Select
+                    value={filters.type}
+                    onValueChange={(v: Filters["type"]) =>
+                      setFilters((p) => ({ ...p, type: v }))
+                    }
+                  >
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="All" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All</SelectItem>
+                      <SelectItem value="Apartment">Apartment</SelectItem>
+                      <SelectItem value="Villa">Villa</SelectItem>
+                      <SelectItem value="Plot">Plot</SelectItem>
+                      <SelectItem value="Commercial">Commercial</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-        {/* Main column */}
-        <div className="min-w-0">
-          {/* Mobile filters */}
-          <div className="mb-4 flex items-center justify-between gap-3 lg:hidden">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="secondary" className="gap-2 rounded-xl"><Filter className="h-4 w-4" /> Filters</Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[320px] p-0">
-                <SheetHeader className="p-4">
-                  <SheetTitle>Filters</SheetTitle>
-                </SheetHeader>
-                <div className="h-full overflow-y-auto p-4">
-                  <Filters
-                    city={city}
-                    setCity={setCity}
-                    beds={beds}
-                    setBeds={setBeds}
-                    baths={baths}
-                    setBaths={setBaths}
-                    price={price}
-                    setPrice={setPrice}
-                    onlyFeatured={onlyFeatured}
-                    setOnlyFeatured={setOnlyFeatured}
+                {/* Beds */}
+                <div className="lg:col-span-2">
+                  <Label className="text-xs text-muted-foreground">Bedrooms</Label>
+                  <Select
+                    value={filters.beds}
+                    onValueChange={(v: Filters["beds"]) =>
+                      setFilters((p) => ({ ...p, beds: v }))
+                    }
+                  >
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="Any" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Any">Any</SelectItem>
+                      <SelectItem value="1">1</SelectItem>
+                      <SelectItem value="2">2</SelectItem>
+                      <SelectItem value="3">3</SelectItem>
+                      <SelectItem value="4+">4+</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Price */}
+                <div className="lg:col-span-2">
+                  <Label className="text-xs text-muted-foreground">Min Price</Label>
+                  <Input
+                    className="mt-2"
+                    inputMode="numeric"
+                    placeholder="e.g. 50"
+                    value={filters.minPrice}
+                    onChange={(e) => setFilters((p) => ({ ...p, minPrice: e.target.value }))}
                   />
                 </div>
-              </SheetContent>
-            </Sheet>
+                <div className="lg:col-span-2">
+                  <Label className="text-xs text-muted-foreground">Max Price</Label>
+                  <Input
+                    className="mt-2"
+                    inputMode="numeric"
+                    placeholder="e.g. 200"
+                    value={filters.maxPrice}
+                    onChange={(e) => setFilters((p) => ({ ...p, maxPrice: e.target.value }))}
+                  />
+                </div>
+              </div>
 
-            <SortMenu sort={sort} setSort={setSort} />
+              <Separator className="my-6" />
+
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Showing <span className="text-foreground font-medium">{paged.length}</span> of{" "}
+                  <span className="text-foreground font-medium">{filtered.length}</span> properties
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  (Demo data) Replace with API / DB later.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Grid */}
+          <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {paged.map((p) => (
+              <PropertyCard key={p.id} p={p} />
+            ))}
           </div>
-
-          {/* Results header */}
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-muted-foreground">
-              Showing <span className="font-medium text-foreground">{filtered.length}</span> results
-            </p>
-            <Tabs defaultValue="grid">
-              <TabsList>
-                <TabsTrigger value="grid">Grid</TabsTrigger>
-                <TabsTrigger value="comfort" disabled>
-                  Comfort (soon)
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-
-          {/* Cards grid */}
-          {pageItems.length === 0 ? (
-            <EmptyState />
-          ) : (
-            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-              {pageItems.map((p, i) => (
-                <motion.div
-                  key={p.id}
-                  initial={{ opacity: 0, y: 18 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.2 }}
-                  transition={{ duration: 0.4, delay: 0.05 * i }}
-                >
-                  <PropertyCard property={p} href={`/properties/${p.id}`} />
-                </motion.div>
-              ))}
-            </div>
-          )}
 
           {/* Pagination */}
-          <div className="mt-8 flex items-center justify-center gap-3">
+          <div className="mt-10 flex items-center justify-between">
             <Button
               variant="secondary"
-              size="sm"
-              className="rounded-xl"
-              disabled={page === 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="rounded-full"
+              disabled={page <= 1}
+              onClick={() => setPage((x) => Math.max(1, x - 1))}
             >
-              <ChevronLeft className="mr-1 h-4 w-4" /> Prev
+              Prev
             </Button>
-            <span className="text-sm text-muted-foreground">
-              Page <span className="font-medium text-foreground">{page}</span> of {totalPages}
-            </span>
+
+            <div className="text-sm text-muted-foreground">
+              Page <span className="text-foreground font-medium">{page}</span> /{" "}
+              <span className="text-foreground font-medium">{totalPages}</span>
+            </div>
+
             <Button
               variant="secondary"
-              size="sm"
-              className="rounded-xl"
-              disabled={page === totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              className="rounded-full"
+              disabled={page >= totalPages}
+              onClick={() => setPage((x) => Math.min(totalPages, x + 1))}
             >
-              Next <ChevronRight className="ml-1 h-4 w-4" />
+              Next
             </Button>
+          </div>
+
+          {/* CTA */}
+          <div className="mt-12 rounded-3xl border bg-background p-6 sm:p-10">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-center">
+              <div className="lg:col-span-8">
+                <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                  Want curated options instead of browsing everything?
+                </h2>
+                <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+                  Tell us your location, budget and preferences — we’ll shortlist verified properties for you.
+                </p>
+              </div>
+              <div className="lg:col-span-4 lg:flex lg:justify-end">
+                <Button asChild size="lg" className="rounded-full">
+                  <Link href="/contact">
+                    Get Shortlist <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
-    </div>
+    </main>
   );
 }
 
-/* ----------------------------- FILTERS ----------------------------- */
+/* ----------------- components ----------------- */
 
-function Filters(props: {
-  city: string;
-  setCity: (v: string) => void;
-  beds: string;
-  setBeds: (v: string) => void;
-  baths: string;
-  setBaths: (v: string) => void;
-  price: [number, number];
-  setPrice: (v: [number, number]) => void;
-  onlyFeatured: boolean;
-  setOnlyFeatured: (v: boolean) => void;
+function Hero({
+  query,
+  setQuery,
+}: {
+  query: string;
+  setQuery: (v: string) => void;
 }) {
-  const { city, setCity, beds, setBeds, baths, setBaths, price, setPrice, onlyFeatured, setOnlyFeatured } = props;
-
   return (
-    <div className="space-y-6">
-      <div>
-        <Label className="text-xs uppercase text-muted-foreground">City</Label>
-        <Select value={city} onValueChange={setCity}>
-          <SelectTrigger className="mt-2 rounded-xl">
-            <SelectValue placeholder="All cities" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All cities</SelectItem>
-            <SelectItem value="mumbai">Mumbai</SelectItem>
-            <SelectItem value="navi">Navi Mumbai</SelectItem>
-            <SelectItem value="pune">Pune</SelectItem>
-            <SelectItem value="bangalore">Bangalore</SelectItem>
-            <SelectItem value="delhi">Delhi</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+    <section className="relative">
+      <div className="relative h-[30vh] min-h-[240px] w-full overflow-hidden sm:h-[36vh] sm:min-h-[300px]">
+        <Image
+          src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=2200&auto=format&fit=crop"
+          alt="Properties hero"
+          fill
+          className="object-cover"
+          sizes="100vw"
+          priority
+        />
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label className="text-xs uppercase text-muted-foreground">Beds</Label>
-          <Select value={beds} onValueChange={setBeds}>
-            <SelectTrigger className="mt-2 rounded-xl">
-              <SelectValue placeholder="Any" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="any">Any</SelectItem>
-              <SelectItem value="1">1+</SelectItem>
-              <SelectItem value="2">2+</SelectItem>
-              <SelectItem value="3">3+</SelectItem>
-              <SelectItem value="4">4+</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label className="text-xs uppercase text-muted-foreground">Baths</Label>
-          <Select value={baths} onValueChange={setBaths}>
-            <SelectTrigger className="mt-2 rounded-xl">
-              <SelectValue placeholder="Any" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="any">Any</SelectItem>
-              <SelectItem value="1">1+</SelectItem>
-              <SelectItem value="2">2+</SelectItem>
-              <SelectItem value="3">3+</SelectItem>
-              <SelectItem value="4">4+</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/60 to-transparent dark:from-background/90 dark:via-background/55" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/55 via-transparent to-transparent" />
+
+        <div className="relative z-10 mx-auto flex h-full max-w-7xl items-end px-4 pb-8 sm:px-6 lg:px-8">
+          <div className="w-full max-w-2xl">
+            <Badge variant="secondary">VistaWorld</Badge>
+            <h1 className="mt-3 text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+              Properties
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+              Verified listings • Smart shortlisting • Real conversations
+            </p>
+
+            {/* Search */}
+            <div className="mt-5 flex items-center gap-3 rounded-2xl border bg-background/80 p-3 backdrop-blur-md">
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by location, project, type..."
+                className="border-0 bg-transparent focus-visible:ring-0"
+              />
+              <Button className="rounded-xl">Search</Button>
+            </div>
+          </div>
         </div>
       </div>
-
-      <div>
-        <div className="flex items-center justify-between">
-          <Label className="text-xs uppercase text-muted-foreground">Price (₹L)</Label>
-          <span className="text-xs text-muted-foreground">{price[0]}L - {price[1]}L</span>
-        </div>
-        <div className="pt-4">
-          <Slider
-            className="px-1"
-            min={50}
-            max={300}
-            step={5}
-            value={price}
-            onValueChange={(v) => setPrice([v[0] as number, v[1] as number])}
-          />
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <Checkbox id="featured" checked={onlyFeatured} onCheckedChange={(v) => setOnlyFeatured(Boolean(v))} />
-        <Label htmlFor="featured">Only featured</Label>
-      </div>
-
-      <Separator />
-
-      <Button variant="secondary" className="w-full gap-2 rounded-xl"><SlidersHorizontal className="h-4 w-4" /> Apply</Button>
-    </div>
+    </section>
   );
 }
 
-/* ----------------------------- SORT MENU ----------------------------- */
-
-function SortMenu({ sort, setSort }: { sort: "reco" | "price-asc" | "price-desc" | "newest"; setSort: (v: any) => void }) {
+function PropertyCard({ p }: { p: Property }) {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="gap-2 rounded-xl">
-          <SlidersHorizontal className="h-4 w-4" /> Sort
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setSort("reco")}>Recommended</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setSort("price-asc")}>Price: Low to High</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setSort("price-desc")}>Price: High to Low</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setSort("newest")}>Newest</DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-/* ---------------------------- EMPTY STATE ---------------------------- */
-
-function EmptyState() {
-  return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border bg-card p-10 text-center">
-      <div className="mb-4 rounded-full bg-muted p-3"><Search className="h-6 w-6 text-muted-foreground" /></div>
-      <h3 className="text-lg font-semibold">No properties found</h3>
-      <p className="mt-1 max-w-sm text-sm text-muted-foreground">Try adjusting your filters or clearing the search to find more results.</p>
-      <Button className="mt-4 rounded-xl" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>Go to filters</Button>
-    </div>
-  );
-}
-
-/* --------------------------- PROPERTY CARD --------------------------- */
-
-function PropertyCard({ property, href }: { property: Property; href: string }) {
-  const [hovered, setHovered] = React.useState(false);
-
-  return (
-    <Card
-      className="group overflow-hidden rounded-2xl border-border/60 bg-card shadow-sm transition-colors"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <div className="relative">
-        <motion.div
-          animate={hovered ? { scale: 1.03 } : { scale: 1 }}
-          transition={{ type: "spring", stiffness: 200, damping: 20 }}
-          className="relative h-56 w-full overflow-hidden"
-        >
+    <Link href={`/properties/${p.id}`} className="group">
+      <Card className="h-full overflow-hidden rounded-3xl transition-all duration-300 group-hover:-translate-y-0.5 group-hover:shadow-lg">
+        <div className="relative aspect-[16/10] w-full bg-muted">
           <Image
-            src={property.imageUrl}
-            alt={property.title}
+            src={p.image}
+            alt={p.title}
             fill
-            className="object-cover"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            priority={false}
+            sizes="(max-width: 1024px) 100vw, 33vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
-          {property.badge && (
-            <Badge className="absolute left-3 top-3 bg-white text-black shadow-sm">{property.badge}</Badge>
-          )}
-        </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={hovered ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-          className="absolute bottom-4 right-4 rounded-full bg-white/90 px-3 py-1 text-sm font-semibold shadow"
-        >
-          {property.priceLabel}
-        </motion.div>
-      </div>
-
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-xl">{property.title}</CardTitle>
-        <p className="flex items-center gap-1 text-sm text-muted-foreground">
-          <MapPin className="h-4 w-4" /> {property.location}
-        </p>
-      </CardHeader>
-
-      <CardContent>
-        <div className="flex items-center gap-4 text-sm">
-          <span className="inline-flex items-center gap-1"><BedDouble className="h-4 w-4" /> {property.beds} Beds</span>
-          <span className="inline-flex items-center gap-1"><Bath className="h-4 w-4" /> {property.baths} Baths</span>
-          <span className="inline-flex items-center gap-1"><Expand className="h-4 w-4" /> {property.area}</span>
+          <div className="absolute left-4 top-4 flex gap-2">
+            <Badge variant="secondary">{p.status}</Badge>
+            {p.featured ? <Badge>Featured</Badge> : null}
+          </div>
         </div>
-      </CardContent>
 
-      <Separator className="mx-6" />
+        <CardContent className="p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-sm font-semibold text-foreground line-clamp-2">
+                {p.title}
+              </div>
+              <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                <MapPin className="h-4 w-4" />
+                <span className="line-clamp-1">{p.location}</span>
+              </div>
+            </div>
 
-      <CardFooter className="flex items-center justify-between pt-4">
-        <p className="text-sm text-muted-foreground">From <span className="font-medium text-foreground">{property.priceLabel}</span></p>
-        <Button asChild variant="secondary" className="group">
-          <Link href={href}>
-            View Details <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-        </Button>
-      </CardFooter>
-    </Card>
+            <div className="shrink-0 text-right">
+              <div className="inline-flex items-center gap-1 text-sm font-semibold text-foreground">
+                <IndianRupee className="h-4 w-4" />
+                <span>{p.priceLabel.replace("₹", "").trim()}</span>
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">{p.type}</div>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+            <Feature icon={<BedDouble className="h-4 w-4" />} label={p.beds ? `${p.beds} Beds` : "—"} />
+            <Feature icon={<Bath className="h-4 w-4" />} label={p.baths ? `${p.baths} Baths` : "—"} />
+            <Feature icon={<Ruler className="h-4 w-4" />} label={p.areaSqft ? `${p.areaSqft} sqft` : "—"} />
+          </div>
+
+          <div className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-foreground">
+            View details <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
+function Feature({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <div className="flex items-center gap-2 rounded-xl border bg-background px-3 py-2">
+      <span className="text-muted-foreground">{icon}</span>
+      <span className="text-muted-foreground">{label}</span>
+    </div>
   );
 }
