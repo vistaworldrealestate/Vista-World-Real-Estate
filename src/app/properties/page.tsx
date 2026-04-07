@@ -30,12 +30,14 @@ import {
   X,
 } from "lucide-react";
 
+import { createSupabaseBrowser } from "@/lib/supabaseClient";
+
 type Property = {
   id: string;
   title: string;
   location: string;
   priceLabel: string; // e.g. "₹ 1.25 Cr"
-  priceValue: number; // for sorting (in lakhs, crores — pick a consistent unit)
+  priceValue: number; // for sorting
   type: "Apartment" | "Villa" | "Plot" | "Commercial";
   status: "For Sale" | "For Rent";
   beds?: number;
@@ -45,102 +47,21 @@ type Property = {
   featured?: boolean;
 };
 
-const DEMO_PROPERTIES: Property[] = [
-  {
-    id: "p1",
-    title: "Luxury 3BHK Apartment with Skyline View",
-    location: "Sector 74, Noida",
-    priceLabel: "₹ 1.25 Cr",
-    priceValue: 125,
-    type: "Apartment",
-    status: "For Sale",
-    beds: 3,
-    baths: 2,
-    areaSqft: 1650,
-    featured: true,
-    image:
-      "https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2000&auto=format&fit=crop",
-  },
-  {
-    id: "p2",
-    title: "Modern 2BHK Near Metro",
-    location: "Dwarka Sec 14, Delhi",
-    priceLabel: "₹ 38,000 /mo",
-    priceValue: 38,
-    type: "Apartment",
-    status: "For Rent",
-    beds: 2,
-    baths: 2,
-    areaSqft: 1180,
-    image:
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=2000&auto=format&fit=crop",
-  },
-  {
-    id: "p3",
-    title: "Premium Villa with Private Lawn",
-    location: "Rohini, Delhi",
-    priceLabel: "₹ 3.10 Cr",
-    priceValue: 310,
-    type: "Villa",
-    status: "For Sale",
-    beds: 4,
-    baths: 4,
-    areaSqft: 3200,
-    featured: true,
-    image:
-      "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=2000&auto=format&fit=crop",
-  },
-  {
-    id: "p4",
-    title: "Corner Plot – Gated Community",
-    location: "Greater Noida West",
-    priceLabel: "₹ 92 Lakh",
-    priceValue: 92,
-    type: "Plot",
-    status: "For Sale",
-    areaSqft: 1800,
-    image:
-      "https://images.unsplash.com/photo-1501183638710-841dd1904471?q=80&w=2000&auto=format&fit=crop",
-  },
-  {
-    id: "p5",
-    title: "Commercial Office Space – Prime Location",
-    location: "Cyber Hub, Gurgaon",
-    priceLabel: "₹ 2.4 Lakh /mo",
-    priceValue: 240,
-    type: "Commercial",
-    status: "For Rent",
-    areaSqft: 2400,
-    image:
-      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2000&auto=format&fit=crop",
-  },
-  {
-    id: "p6",
-    title: "3BHK Family Apartment – Park Facing",
-    location: "Indirapuram, Ghaziabad",
-    priceLabel: "₹ 98 Lakh",
-    priceValue: 98,
-    type: "Apartment",
-    status: "For Sale",
-    beds: 3,
-    baths: 2,
-    areaSqft: 1520,
-    image:
-      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2000&auto=format&fit=crop",
-  },
-];
-
 type Filters = {
   query: string;
   status: "All" | Property["status"];
   type: "All" | Property["type"];
-  minPrice: string; // number as string for input
+  minPrice: string;
   maxPrice: string;
   beds: "Any" | "1" | "2" | "3" | "4+";
   sort: "Newest" | "Price: Low to High" | "Price: High to Low";
 };
 
 export default function PropertiesPage() {
+  const supabase = React.useMemo(() => createSupabaseBrowser(), []);
+  const [properties, setProperties] = React.useState<Property[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
   const [filters, setFilters] = React.useState<Filters>({
     query: "",
     status: "All",
@@ -151,11 +72,44 @@ export default function PropertiesPage() {
     sort: "Newest",
   });
 
+
   const [page, setPage] = React.useState(1);
   const pageSize = 6;
 
+  const fetchProperties = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("properties")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      const normalized: Property[] = data.map((p: any) => ({
+        id: p.id,
+        slug: p.slug || p.id,
+        title: p.title,
+        location: p.location,
+        priceLabel: p.price_label,
+        priceValue: p.price_value,
+        type: p.type,
+        status: p.status,
+        beds: p.beds,
+        baths: p.baths,
+        areaSqft: p.area_sqft,
+        image: p.image_url || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=2200&auto=format&fit=crop",
+        featured: p.featured,
+      }));
+      setProperties(normalized);
+    }
+    setLoading(false);
+  };
+
+  React.useEffect(() => {
+    fetchProperties();
+  }, []);
+
   const filtered = React.useMemo(() => {
-    let list = [...DEMO_PROPERTIES];
+    let list = [...properties];
 
     // search
     if (filters.query.trim()) {
@@ -187,7 +141,7 @@ export default function PropertiesPage() {
       });
     }
 
-    // price range (priceValue uses your chosen unit; demo assumes "lakh-ish numbers" mix)
+    // price range
     const min = filters.minPrice ? Number(filters.minPrice) : null;
     const max = filters.maxPrice ? Number(filters.maxPrice) : null;
 
@@ -199,13 +153,10 @@ export default function PropertiesPage() {
       list.sort((a, b) => a.priceValue - b.priceValue);
     } else if (filters.sort === "Price: High to Low") {
       list.sort((a, b) => b.priceValue - a.priceValue);
-    } else {
-      // Newest (demo: keep order)
-      list = list;
     }
 
     return list;
-  }, [filters]);
+  }, [filters, properties]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
@@ -213,6 +164,7 @@ export default function PropertiesPage() {
   React.useEffect(() => {
     setPage(1);
   }, [filters.query, filters.status, filters.type, filters.minPrice, filters.maxPrice, filters.beds, filters.sort]);
+
 
   const resetFilters = () =>
     setFilters({
@@ -498,7 +450,9 @@ function PropertyCard({ p }: { p: Property }) {
             fill
             sizes="(max-width: 1024px) 100vw, 33vw"
             className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            unoptimized
           />
+
 
           <div className="absolute left-4 top-4 flex gap-2">
             <Badge variant="secondary">{p.status}</Badge>

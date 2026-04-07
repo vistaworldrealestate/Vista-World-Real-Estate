@@ -8,6 +8,8 @@ import {
   Contact2,
   Newspaper,
   Contact,
+  Building2,
+  Plus,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -21,11 +23,26 @@ const nav = [
     color: "from-indigo-500 to-purple-500",
   },
   {
+    href: "/admin/properties",
+    label: "Properties",
+    icon: Building2,
+    color: "from-blue-500 to-indigo-600",
+  },
+  {
+    href: "/admin/properties/enquiries",
+    label: "Enquiries",
+    icon: Contact2,
+    color: "from-emerald-500 to-teal-600",
+  },
+  {
     href: "/admin/clients",
+
+
     label: "Clients",
     icon: Users,
     color: "from-teal-400 to-cyan-500",
   },
+
   {
     href: "/admin/leads",
     label: "Leads",
