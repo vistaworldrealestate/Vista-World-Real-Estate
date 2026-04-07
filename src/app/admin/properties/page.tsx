@@ -115,14 +115,14 @@ function SidePanel({
   );
 }
 
-// ---------------- Page ----------------
-export default function AdminPropertiesPage() {
+// ---------------- Page Content (Wrapped in Suspense) ----------------
+function PropertiesContent() {
   const supabase = React.useMemo(() => createSupabaseBrowser(), []);
   const searchParams = useSearchParams();
 
   const [properties, setProperties] = React.useState<Property[]>([]);
   const [loading, setLoading] = React.useState(true);
-  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+  const [, setErrorMsg] = React.useState<string | null>(null);
 
   // Filters
   const [search, setSearch] = React.useState("");
@@ -182,13 +182,13 @@ export default function AdminPropertiesPage() {
 
   React.useEffect(() => {
     fetchProperties();
-  }, []);
+  }, [supabase]);
 
   React.useEffect(() => {
     if (searchParams.get("action") === "add" && !openAddEdit) {
       handleOpenAdd();
     }
-  }, [searchParams]);
+  }, [searchParams, openAddEdit]);
 
   const handleOpenAdd = () => {
     setEditingId(null);
@@ -744,5 +744,21 @@ export default function AdminPropertiesPage() {
         .font-sans { font-family: 'Inter', sans-serif; }
       `}</style>
     </div>
+  );
+}
+
+// ---------------- Shell Component (Default Export) ----------------
+export default function AdminPropertiesPage() {
+  return (
+    <React.Suspense fallback={
+      <div className="flex h-[60vh] w-full items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-indigo-500" />
+          <span className="text-xs font-black uppercase tracking-[0.2em] text-neutral-400">Loading properties panel...</span>
+        </div>
+      </div>
+    }>
+      <PropertiesContent />
+    </React.Suspense>
   );
 }

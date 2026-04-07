@@ -169,7 +169,7 @@ export default function EnquiriesPage() {
                       </td>
                       <td className="px-8 py-6 max-w-md">
                         <div className="bg-neutral-100/50 p-4 rounded-2xl border border-neutral-200/40 text-neutral-600 leading-relaxed font-sans text-xs italic">
-                          "{e.message || "No specific message provided."}"
+                          &quot;{e.message || "No specific message provided."}&quot;
                         </div>
                       </td>
                       <td className="px-8 py-6 text-right">
